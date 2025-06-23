@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: reporting-system
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    working_dir: /var/www
+    # Comment out volume for first run to use image files
+    # volumes:
+    #   - ./app:/var/www
+    # Use default command from Dockerfile:
+    # command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+
+  db:
+    image: mysql:8.0
+    container_name: reporting-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
