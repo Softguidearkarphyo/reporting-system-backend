@@ -1,39 +1,43 @@
-up:
-	docker-compose up -d --build
+# Makefile for Laravel Sail setup
 
-down:
-	docker-compose down
+setup:
+	sudo apt update && sudo apt install -y composer
+	sudo apt install -y php8.3-dom php8.3-xml
+	sudo chown -R $(shell whoami):$(shell whoami) .
+	cp -n .env.example .env
+	composer install
+	./vendor/bin/sail up -d
+	docker-compose exec reporting-system php artisan key:generate
+	docker-compose exec reporting-system php artisan migrate:fresh
+	docker-compose exec reporting-system php artisan optimize:clear
+
+start:
+	./vendor/bin/sail up -d
+
+stop:
+	./vendor/bin/sail down
 
 restart:
-	docker-compose down && docker-compose up -d --build
-
-composer:
-	docker-compose exec app composer install
-
-artisan:
-	docker-compose exec app php artisan $(cmd)
+	./vendor/bin/sail down
+	./vendor/bin/sail up -d
 
 migrate:
-	docker-compose exec app php artisan migrate --seed
+	./vendor/bin/sail artisan migrate
 
-bash:
-	docker-compose exec app bash
+refresh:
+	./vendor/bin/sail artisan migrate:fresh --seed
 
-init:
-	docker-compose up -d --build
-	@echo "Waiting for 'app' container to be running..."
-	@while [ "$$(docker inspect -f '{{.State.Running}}' reporting-system)" != "true" ]; do \
-		echo "Waiting for app container..."; \
-		sleep 2; \
-	done
-	# Ensure .env exists
-	@if [ ! -f ./.env ]; then cp ./.env.example ./.env; fi
-	docker-compose exec app composer install
-	docker-compose exec app php artisan key:generate
-	docker-compose exec app php artisan migrate:fresh --seed
-	docker-compose exec app php artisan config:clear
-	docker-compose exec app php artisan config:cache
-	docker-compose exec app php artisan route:clear
-	docker-compose exec app php artisan route:cache
-	docker-compose exec app php artisan view:clear
-	docker-compose exec app php artisan view:cache
+clear:
+	./vendor/bin/sail artisan optimize:clear
+
+key:
+	./vendor/bin/sail artisan key:generate
+
+artisan:
+	./vendor/bin/sail artisan
+
+composer:
+	./vendor/bin/sail composer
+
+logs:
+	./vendor/bin/sail logs -f
