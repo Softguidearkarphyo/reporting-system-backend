@@ -32,8 +32,5 @@ class StaffController extends Controller
         ];
         $staff = new StaffResource(Staff::create($createData));
         return response()->json($staff);
-        // $result = new Collection([Staff::create($createData)]);
-        // $staff = StaffResource::collection($result);
-        // return response()->json($staff);
     }
 }
