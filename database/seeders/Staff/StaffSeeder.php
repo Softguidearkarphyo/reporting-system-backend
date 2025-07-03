@@ -16,58 +16,61 @@ class StaffSeeder extends Seeder
     {
         $staffs = [
             [
+                'staff_no' => 'SGWT0000000000000001',
                 'eng_name' => 'John Doe',
                 'jp_name' => 'ジョン・ドウ',
                 'username' => 'johndoe',
                 'password' => Hash::make('secret123'),
                 'address' => 'Tokyo, Japan',
                 'ph_number' => '09012345678',
-                'position' => 'Developer',
-                'role' => 'admin',
+                'position' => 1,
+                'role' => 1,
                 'email' => 'john@example.com',
-                'perment_date' => '2023-01-01',
+                'permanent_date' => '2023-01-01',
                 'ref_person' => 'Mr. Smith',
                 'ref_ph_number' => '08098765432',
-                'project' => 'Project A',
+                'project' => 1,
                 'sort_key' => 1,
             ],
             [
+                'staff_no' => 'SGWT0000000000000001',
                 'eng_name' => 'Emily Tanaka',
                 'jp_name' => 'エミリー・タナカ',
                 'username' => 'emily',
                 'password' => Hash::make('password456'),
                 'address' => 'Osaka, Japan',
                 'ph_number' => '08055554444',
-                'position' => 'Designer',
-                'role' => 'staff',
+                'position' => 2,
+                'role' => 2,
                 'email' => 'emily@example.com',
-                'perment_date' => '2024-03-15',
+                'permanent_date' => '2024-03-15',
                 'ref_person' => 'Ms. Yuki',
                 'ref_ph_number' => '07033332222',
-                'project' => 'Project B',
+                'project' => 2,
                 'sort_key' => 2,
             ],
             [
+                'staff_no' => 'SGWT0000000000000001',
                 'eng_name' => 'Taro Suzuki',
                 'jp_name' => '鈴木 太郎',
                 'username' => 'taro',
                 'password' => Hash::make('taro789'),
                 'address' => 'Nagoya, Japan',
                 'ph_number' => '07012344321',
-                'position' => 'Manager',
-                'role' => 'manager',
+                'position' => 3,
+                'role' => 2,
                 'email' => 'taro@example.com',
-                'perment_date' => '2022-06-30',
+                'permanent_date' => '2022-06-30',
                 'ref_person' => 'Mr. Ken',
                 'ref_ph_number' => '09011112222',
-                'project' => 'Project C',
+                'project' => 3,
                 'sort_key' => 3,
             ],
         ];
 
         foreach ($staffs as $staff) {
-            $staff['created_date'] = now();
-            $staff['updated_date'] = now();
+            $staff['created_at'] = now();
+            $staff['updated_at'] = now();
             Staff::create($staff);
         }
     }

@@ -13,22 +13,23 @@ return new class extends Migration
     {
         Schema::create('staff', function (Blueprint $table) {
             $table->id();
-            $table->string('eng_name');
-            $table->string('jp_name');
-            $table->string('username');
+            $table->string('staff_no', 30);
+            $table->string('eng_name', 40);
+            $table->string('jp_name', 40);
+            $table->string('username', 40);
             $table->string('password');
-            $table->text('address');
-            $table->string('ph_number')->nullable();
-            $table->string('position')->nullable();
-            $table->string('role');
+            $table->string('address', 250);
+            $table->string('ph_number', 100)->nullable();
+            $table->unsignedTinyInteger('position');
+            $table->unsignedTinyInteger('role');
             $table->string('email')->nullable();
-            $table->date('perment_date')->nullable();
-            $table->string('ref_person')->nullable();
-            $table->string('ref_ph_number')->nullable();
-            $table->string('project')->nullable();
-            $table->integer('sort_key')->nullable();
-            $table->timestamp('created_date')->nullable();
-            $table->timestamp('updated_date')->nullable();
+            $table->date('permanent_date')->nullable();
+            $table->string('ref_person', 40)->nullable();
+            $table->string('ref_ph_number', 100)->nullable();
+            $table->unsignedTinyInteger('project',)->nullable();
+            $table->unsignedTinyInteger('sort_key')->nullable();
+            $table->timestamps();
+            $table->softDeletes()->nullable();
         });
     }
 

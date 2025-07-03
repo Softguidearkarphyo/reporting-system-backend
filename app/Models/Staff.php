@@ -5,24 +5,22 @@ namespace App\Models;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Staff extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
     //
     // Enable timestamps
     public $timestamps = true;
-
-    // Use custom timestamp column names
-    const CREATED_AT = 'created_date';
-    const UPDATED_AT = 'updated_date';
 
     // Optional: specify table name (if it's not plural or different)
     protected $table = 'staff';
 
     // Fillable fields for mass-assignment
     protected $fillable = [
+        'staff_no',
         'eng_name',
         'jp_name',
         'username',
@@ -32,7 +30,7 @@ class Staff extends Model
         'position',
         'role',
         'email',
-        'perment_date',
+        'permanent_date',
         'ref_person',
         'ref_ph_number',
         'project',
