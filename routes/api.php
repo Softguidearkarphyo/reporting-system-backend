@@ -7,8 +7,9 @@ use App\Http\Controllers\Staff\StaffController;
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
     Route::prefix('/staff')->group(function () {
-        Route::post('/create', [StaffController::class, 'create']);
         Route::post('/get', [StaffController::class, 'get']);
+        Route::post('/create', [StaffController::class, 'create']);
+        Route::post('/update', [StaffController::class, 'update']);
         Route::post('/delete', [StaffController::class, 'delete']);
     });
 });

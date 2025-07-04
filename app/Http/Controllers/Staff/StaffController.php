@@ -11,10 +11,28 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\Staff\StaffResource;
 use App\Http\Requests\Staff\StaffGetRequest;
 use App\Http\Requests\Staff\StaffCreateRequest;
+use App\Http\Requests\Staff\StaffUpdateRequest;
 use App\Http\Requests\Staff\StaffDeleteRequest;
 
 class StaffController extends Controller
 {
+    public function get(StaffGetRequest $request)
+    {
+        try {
+            $data   = $request->all();
+            $query  = Staff::query();
+            if (!empty($data['id'])) {
+                $query->where('id', $data['id']);
+            }
+            $staffs = $query->get();
+            $staffs = StaffResource::collection($staffs);
+            return response()->json($staffs);
+        } catch (\Throwable  $e) {
+            Utility::log("MemberController::get", $e->getMessage());
+            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function create(StaffCreateRequest $request)
     {
         DB::beginTransaction();
@@ -32,14 +50,14 @@ class StaffController extends Controller
                 "role"              => $data['role'],
                 "email"             => $data['email'],
                 "permanent_date"    => $data['permanent_date'],
-                "ref_person"        => $data['ref_person'],
-                "ref_ph_number"     => $data['ref_ph_number'],
+                "ref_person"        => $data['ref_person'] ?? null,
+                "ref_ph_number"     => $data['ref_ph_number'] ?? null,
                 "project"           => $data['project'],
                 "sort_key"          => $data['sort_key']
             ];
             $staff = new StaffResource(Staff::create($createData));
             DB::commit();
-            return response()->json($staff);
+            return ["status" => ReturnMessage::OK];
         } catch (\Throwable  $e) {
             DB::rollBack();
             Utility::log("MemberController::create", $e->getMessage());
@@ -47,20 +65,38 @@ class StaffController extends Controller
         }
     }
 
-    public function get(StaffGetRequest $request)
+     public function update(StaffUpdateRequest $request)
     {
+        DB::beginTransaction();
         try {
             $data   = $request->all();
-            $query  = Staff::query();
-            if (!empty($data['id'])) {
-                $query->where('id', $data['id']);
+            $updateData = [
+                "staff_no"          => $data['staff_no'],
+                "eng_name"          => $data['eng_name'],
+                "jp_name"           => $data['jp_name'],
+                "username"          => $data['username'],
+                "address"           => $data['address'],
+                "ph_number"         => $data['ph_number'],
+                "position"          => $data['position'],
+                "role"              => $data['role'],
+                "email"             => $data['email'],
+                "permanent_date"    => $data['permanent_date'],
+                "ref_person"        => $data['ref_person'],
+                "ref_ph_number"     => $data['ref_ph_number'],
+                "project"           => $data['project'],
+                "sort_key"          => $data['sort_key']
+            ];
+            if (!empty($data['password'])) {
+            $updateData['password'] = Hash::make($data['password']);
             }
-            $staffs = $query->get();
-            $staffs = StaffResource::collection($staffs);
-            return response()->json($staffs);
+            $Staff = Staff::where('id', $data['id'])->first();
+            $Staff->update($updateData);
+            DB::commit();
+            return ["status" => ReturnMessage::OK];
         } catch (\Throwable  $e) {
-            Utility::log("MemberController::get", $e->getMessage());
-            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+            DB::rollBack();
+            Utility::log("MemberController::update", $e->getMessage());
+            return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
         }
     }
 
