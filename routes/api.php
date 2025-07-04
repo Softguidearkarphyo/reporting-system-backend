@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Staff\StaffController;
+use App\Http\Controllers\Project\ProjectController;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -11,6 +12,12 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/create', [StaffController::class, 'create']);
         Route::post('/update', [StaffController::class, 'update']);
         Route::post('/delete', [StaffController::class, 'delete']);
+    });
+    Route::prefix('/project')->group(function () {
+        Route::post('/get', [ProjectController::class, 'get']);
+        Route::post('/create', [ProjectController::class, 'create']);
+        Route::post('/update', [ProjectController::class, 'update']);
+        Route::post('/delete', [ProjectController::class, 'delete']);
     });
 });
 

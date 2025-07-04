@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Staff;
+namespace App\Http\Requests\Project;
 
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StaffDeleteRequest extends FormRequest
+class ProjectCreateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +23,9 @@ class StaffDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "id" => ["required", "integer", "exists:staffs,id"],
+            "code"      => ["required", "string", "max:30", Rule::unique('projects', 'code')],
+            "eng_name"  => ["required", "string", "max:50"],
+            "jp_name"   => ["required", "string", "max:50"],
         ];
     }
 }

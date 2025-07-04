@@ -22,7 +22,7 @@ class StaffGetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "id" => ["integer", "exists:staff,id"],
+            "id" => ["integer", "exists:staffs,id"],
         ];
     }
 }

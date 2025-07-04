@@ -16,7 +16,7 @@ class Staff extends Model
     public $timestamps = true;
 
     // Optional: specify table name (if it's not plural or different)
-    protected $table = 'staff';
+    protected $table = 'staffs';
 
     // Fillable fields for mass-assignment
     protected $fillable = [
