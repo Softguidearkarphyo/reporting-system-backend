@@ -13,5 +13,6 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     });
 });
 
+Route::get('/user', [AuthController::class, 'user']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
