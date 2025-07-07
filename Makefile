@@ -3,7 +3,6 @@
 setup:
 	sudo apt update && sudo apt install -y composer
 	sudo apt install -y php8.3-dom php8.3-xml
-	sudo chown -R $(shell whoami):$(shell whoami) .
 	cp -n .env.example .env
 	composer install
 	./vendor/bin/sail up -d
