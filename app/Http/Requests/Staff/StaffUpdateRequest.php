@@ -21,7 +21,7 @@ class StaffUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id'              => ['sometimes', 'integer', 'exists:staff,id'],
+            'id'              => ['sometimes', 'integer', 'exists:staffs,id'],
             'staff_no'        => ['nullable', 'string', 'max:30'],
             'eng_name'        => ['required', 'string', 'max:40'],
             'jp_name'         => ['required', 'string', 'max:40'],
