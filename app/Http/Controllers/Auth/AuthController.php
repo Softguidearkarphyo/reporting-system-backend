@@ -20,10 +20,17 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
             $staff = Staff::where('username', $credentials['username'])->first();
-            if (!$staff || !Hash::check($credentials['password'], $staff->password)) {
-                return response()->json(['message' => 'Invalid credentials'], 401);
+            
+            if (!$staff) {
+                return response()->json([
+                    'message' => "Username does not match!",
+                ],422);
             }
-            // Generate Sanctum token (for API use)
+            if (!Hash::check($credentials['password'], $staff->password)) {
+                return response()->json([
+                    'message' => 'Password is incorrect',
+                ],401);  
+            }
             $token = $staff->createToken('staff-token')->plainTextToken;
             return response()->json([
                 'message' => 'Logged in',
