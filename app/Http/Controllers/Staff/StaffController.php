@@ -65,7 +65,7 @@ class StaffController extends Controller
         }
     }
 
-     public function update(StaffUpdateRequest $request)
+    public function update(StaffUpdateRequest $request)
     {
         DB::beginTransaction();
         try {
@@ -87,7 +87,7 @@ class StaffController extends Controller
                 "sort_key"          => $data['sort_key']
             ];
             if (!empty($data['password'])) {
-            $updateData['password'] = Hash::make($data['password']);
+                $updateData['password'] = Hash::make($data['password']);
             }
             $Staff = Staff::where('id', $data['id'])->first();
             $Staff->update($updateData);

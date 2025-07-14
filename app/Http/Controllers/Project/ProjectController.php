@@ -11,6 +11,7 @@ use App\Http\Resources\Project\ProjectResource;
 use App\Http\Requests\Project\ProjectGetRequest;
 use App\Http\Requests\Project\ProjectCreateRequest;
 use App\Http\Requests\Project\ProjectDeleteRequest;
+use App\Http\Requests\Project\ProjectUpdateRequest;
 
 class ProjectController extends Controller
 {
@@ -47,6 +48,28 @@ class ProjectController extends Controller
         } catch (\Throwable  $e) {
             DB::rollBack();
             Utility::log("ProjectController::create", $e->getMessage());
+            return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
+        }
+    }
+
+
+    public function update(ProjectUpdateRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            $data   = $request->all();
+            $updateData = [
+                "code"      => $data['code'],
+                "eng_name"  => $data['eng_name'],
+                "jp_name"   => $data['jp_name'],
+            ];
+            $project = Project::where('id', $data['id'])->first();
+            $project->update($updateData);
+            DB::commit();
+            return response()->json(new ProjectResource($project));
+        } catch (\Throwable  $e) {
+            DB::rollBack();
+            Utility::log("ProjectController::update", $e->getMessage());
             return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
         }
     }

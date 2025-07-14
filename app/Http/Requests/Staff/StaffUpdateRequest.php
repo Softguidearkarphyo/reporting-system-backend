@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Staff;
 
 use Illuminate\Foundation\Http\FormRequest;
+
 class StaffUpdateRequest extends FormRequest
 {
     /**
@@ -21,7 +22,7 @@ class StaffUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id'              => ['integer', 'exists:staffs,id'],
+            'id'              => ['required', 'integer', 'exists:staffs,id'],
             'staff_no'        => ['nullable', 'string', 'max:30'],
             'eng_name'        => ['required', 'string', 'max:40'],
             'jp_name'         => ['required', 'string', 'max:40'],
