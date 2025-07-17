@@ -6,6 +6,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Staff extends Model
@@ -39,4 +40,13 @@ class Staff extends Model
 
     // If you want password to be hidden in JSON responses
     protected $hidden = ['password'];
+
+    public function staffProjects(): HasMany
+    {
+        return $this->hasMany(
+            StaffProject::class,
+            'staff_id',
+            'id'
+        )->whereNull('deleted_at');
+    }
 }

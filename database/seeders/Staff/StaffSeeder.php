@@ -29,7 +29,6 @@ class StaffSeeder extends Seeder
                 'permanent_date' => '2023-01-01',
                 'ref_person' => 'Mr. Smith',
                 'ref_ph_number' => '08098765432',
-                'project' => 1,
                 'sort_key' => 1,
             ],
             [
@@ -46,7 +45,6 @@ class StaffSeeder extends Seeder
                 'permanent_date' => '2024-03-15',
                 'ref_person' => 'Ms. Yuki',
                 'ref_ph_number' => '07033332222',
-                'project' => 2,
                 'sort_key' => 2,
             ],
             [
@@ -63,7 +61,6 @@ class StaffSeeder extends Seeder
                 'permanent_date' => '2022-06-30',
                 'ref_person' => 'Mr. Ken',
                 'ref_ph_number' => '09011112222',
-                'project' => 3,
                 'sort_key' => 3,
             ],
         ];

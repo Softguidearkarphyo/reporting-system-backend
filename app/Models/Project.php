@@ -6,6 +6,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Project extends Model
@@ -21,4 +22,13 @@ class Project extends Model
         'eng_name',
         'jp_name',
     ];
+
+    public function staffProjects(): HasMany
+    {
+        return $this->hasMany(
+            StaffProject::class,
+            'project_id',
+            'id'
+        )->whereNull('deleted_at');
+    }
 }

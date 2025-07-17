@@ -26,7 +26,6 @@ return new class extends Migration
             $table->date('permanent_date')->nullable();
             $table->string('ref_person', 40)->nullable();
             $table->string('ref_ph_number', 100)->nullable();
-            $table->unsignedTinyInteger('project',)->nullable();
             $table->unsignedTinyInteger('sort_key')->nullable();
             $table->timestamps();
             $table->softDeletes()->nullable();
@@ -38,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('staff');
+        Schema::dropIfExists('staffs');
     }
 };
