@@ -21,10 +21,6 @@ class ResponsibilitySeeder extends Seeder
             ]
         ];
 
-        foreach ($responsibilities as $responsibility) {
-            $responsibility['created_at'] = now();
-            $responsibility['updated_at'] = now();
-            Responsibility::create($responsibility);
-        }
+        Responsibility::insert($responsibilities);
     }
 }

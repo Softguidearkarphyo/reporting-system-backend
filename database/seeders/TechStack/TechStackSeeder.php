@@ -41,10 +41,6 @@ class TechStackSeeder extends Seeder
             ['name' => 'Oracle'],
         ];
 
-        foreach ($techStacks as $techStack) {
-            $techStack['created_at'] = now();
-            $techStack['updated_at'] = now();
-            TechStack::create($techStack);
-        }
+        TechStack::insert($techStacks);
     }
 }

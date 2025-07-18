@@ -38,7 +38,7 @@ class ProjectController extends Controller
         try {
             $data = $request->all();
             $createData = [
-                "code"      => $data['code'],
+                "cd"        => $data['cd'],
                 "eng_name"  => $data['eng_name'],
                 "jp_name"   => $data['jp_name'],
             ];
@@ -59,7 +59,7 @@ class ProjectController extends Controller
         try {
             $data   = $request->all();
             $updateData = [
-                "code"      => $data['code'],
+                "cd"        => $data['cd'],
                 "eng_name"  => $data['eng_name'],
                 "jp_name"   => $data['jp_name'],
             ];

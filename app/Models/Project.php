@@ -18,7 +18,7 @@ class Project extends Model
     protected $table = 'projects';
 
     protected $fillable = [
-        'code',
+        'cd',
         'eng_name',
         'jp_name',
     ];
@@ -27,6 +27,15 @@ class Project extends Model
     {
         return $this->hasMany(
             StaffProject::class,
+            'project_id',
+            'id'
+        )->whereNull('deleted_at');
+    }
+
+    public function taskPerformance(): HasMany
+    {
+        return $this->hasMany(
+            TaskPerformance::class,
             'project_id',
             'id'
         )->whereNull('deleted_at');

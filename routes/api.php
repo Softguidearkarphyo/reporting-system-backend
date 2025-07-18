@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Employee\EmployeeController;
+use App\Http\Controllers\Task\TaskController;
 use App\Http\Controllers\Staff\StaffController;
 use App\Http\Controllers\Project\ProjectController;
+use App\Http\Controllers\Employee\EmployeeController;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -23,6 +24,9 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/employee')->group(function () {
         Route::post('/get-skill', [EmployeeController::class, 'get']);
         Route::post('/add-skill', [EmployeeController::class, 'create']);
+    });
+    Route::prefix('/task')->group(function () {
+        Route::post('/get', [TaskController::class, 'get']);
     });
 });
 

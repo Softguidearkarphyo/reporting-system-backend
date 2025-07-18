@@ -40,10 +40,6 @@ class ProficiencyLevelSeeder extends Seeder
             ],
         ];
 
-        foreach ($proficiencyLevels as $proficiencyLevel) {
-            $proficiencyLevel['created_at'] = now();
-            $proficiencyLevel['updated_at'] = now();
-            ProficiencyLevel::create($proficiencyLevel);
-        }
+        ProficiencyLevel::insert($proficiencyLevels);
     }
 }

@@ -65,10 +65,6 @@ class StaffSeeder extends Seeder
             ],
         ];
 
-        foreach ($staffs as $staff) {
-            $staff['created_at'] = now();
-            $staff['updated_at'] = now();
-            Staff::create($staff);
-        }
+        Staff::insert($staffs);
     }
 }

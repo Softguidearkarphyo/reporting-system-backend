@@ -14,26 +14,22 @@ class ProjectSeeder extends Seeder
     {
         $projects = [
             [
-                'code' => 'MIRAI-PRJ0001',
-                'eng_name' => 'Mirai Project',
-                'jp_name' => '未来プロジェクト',
+                'cd'        => 'MIRAI-PRJ0001',
+                'eng_name'  => 'Mirai Project',
+                'jp_name'   => '未来プロジェクト',
             ],
             [
-                'code' => 'KENJA-PRJ0001',
-                'eng_name' => 'Kenja Project',
-                'jp_name' => '賢者プロジェクト',
+                'cd'        => 'KENJA-PRJ0001',
+                'eng_name'  => 'Kenja Project',
+                'jp_name'   => '賢者プロジェクト',
             ],
             [
-                'code' => 'DB-MAINTENANCE-TOOL0001',
-                'eng_name' => 'Kenja Database Maintenance Project',
-                'jp_name' => '賢者データベースメンテナンスツールプロジェクト',
+                'cd'        => 'DB-MAINTENANCE-TOOL0001',
+                'eng_name'  => 'Kenja Database Maintenance Project',
+                'jp_name'   => '賢者データベースメンテナンスツールプロジェクト',
             ],
         ];
 
-        foreach ($projects as $project) {
-            $project['created_at'] = now();
-            $project['updated_at'] = now();
-            Project::create($project);
-        }
+        Project::insert($projects);
     }
 }

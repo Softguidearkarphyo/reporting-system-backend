@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Project;
+namespace App\Http\Requests\Reporting;
 
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ProjectCreateRequest extends FormRequest
+class TaskGetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +21,6 @@ class ProjectCreateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            "cd"        => ["required", "string", "max:30", Rule::unique('projects', 'cd')],
-            "eng_name"  => ["required", "string", "max:50"],
-            "jp_name"   => ["required", "string", "max:50"],
-        ];
+        return [];
     }
 }

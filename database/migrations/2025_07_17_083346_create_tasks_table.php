@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('projects', function (Blueprint $table) {
+        Schema::create('tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('cd', 30)->unique();
-            $table->string('eng_name', 50);
-            $table->string('jp_name', 50);
+            $table->string('cd', 2);
+            $table->string('eng_name', 30);
+            $table->string('jp_name', 30);
             $table->timestamps();
             $table->softDeletes()->nullable();
         });
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('projects');
+        Schema::dropIfExists('tasks');
     }
 };

@@ -27,8 +27,6 @@ class StaffProjectSeeder extends Seeder
             ],
         ];
 
-        foreach ($staffProjects as $staffProject) {
-            StaffProject::create($staffProject);
-        }
+        StaffProject::insert($staffProjects);
     }
 }

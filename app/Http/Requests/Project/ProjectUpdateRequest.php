@@ -24,7 +24,7 @@ class ProjectUpdateRequest extends FormRequest
     {
         return [
             "id"        => ["required", "integer", "exists:projects,id"],
-            "code"      => ["required", "string", "max:30", Rule::unique('projects', 'code')->ignore($this->id)],
+            "cd"        => ["required", "string", "max:30", Rule::unique('projects', 'cd')->ignore($this->id)],
             "eng_name"  => ["required", "string", "max:50"],
             "jp_name"   => ["required", "string", "max:50"],
         ];

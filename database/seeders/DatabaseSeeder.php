@@ -4,13 +4,14 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-use App\Models\ProficiencyLevel;
 use Illuminate\Database\Seeder;
+use App\Models\ProficiencyLevel;
+use Database\Seeders\Task\TaskSeeder;
 use Database\Seeders\Staff\StaffSeeder;
 use Database\Seeders\Project\ProjectSeeder;
+use Database\Seeders\TechStack\TechStackSeeder;
 use Database\Seeders\StaffProject\StaffProjectSeeder;
 use Database\Seeders\Responsibility\ResponsibilitySeeder;
-use Database\Seeders\TechStack\TechStackSeeder;
 use Database\Seeders\ProficiencyLevel\ProficiencyLevelSeeder;
 
 
@@ -30,6 +31,7 @@ class DatabaseSeeder extends Seeder
             ResponsibilitySeeder::class,
             TechStackSeeder::class,
             ProficiencyLevelSeeder::class,
+            TaskSeeder::class
         ]);
     }
 }
