@@ -93,7 +93,6 @@ class StaffController extends Controller
                 "permanent_date"    => $data['permanent_date'],
                 "ref_person"        => $data['ref_person'],
                 "ref_ph_number"     => $data['ref_ph_number'],
-                "project"           => $data['project'],
                 "sort_key"          => $data['sort_key']
             ];
             if (!empty($data['password'])) {
@@ -101,6 +100,19 @@ class StaffController extends Controller
             }
             $Staff = Staff::where('id', $data['id'])->first();
             $Staff->update($updateData);
+
+            StaffProject::where('staff_id', $data['id'])->delete();
+
+            if (!empty($data['project']) && is_array($data['project'])) {
+                $insertData = [];
+                foreach ($data['project'] as $projectId) {
+                    $insertData[] = [
+                        'staff_id'   => $data['id'],
+                        'project_id' => $projectId,
+                    ];
+                }
+                StaffProject::insert($insertData);
+            }
             DB::commit();
             return ["status" => ReturnMessage::OK];
         } catch (\Throwable  $e) {
