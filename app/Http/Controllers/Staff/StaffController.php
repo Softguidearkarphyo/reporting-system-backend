@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Utility;
 use App\Models\Staff;
+use App\Models\StaffProject;
 use App\ReturnMessage;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -52,10 +53,19 @@ class StaffController extends Controller
                 "permanent_date"    => $data['permanent_date'],
                 "ref_person"        => $data['ref_person'] ?? null,
                 "ref_ph_number"     => $data['ref_ph_number'] ?? null,
-                "project"           => $data['project'],
                 "sort_key"          => $data['sort_key']
             ];
             $staff = new StaffResource(Staff::create($createData));
+            if (!empty($data['project']) && is_array($data['project'])) {
+                $insertData = [];
+                foreach ($data['project'] as $projectId) {
+                    $insertData[] = [
+                        'staff_id'   => $staff->id,
+                        'project_id' => $projectId,
+                    ];
+                }
+                StaffProject::insert($insertData);
+            }
             DB::commit();
             return ["status" => ReturnMessage::OK];
         } catch (\Throwable  $e) {
