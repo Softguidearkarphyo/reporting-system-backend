@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('prev_experience');
             $table->unsignedTinyInteger('total_experience');
             $table->string('expertise');
-            $table->unsignedTinyInteger('language_level_id');
+            $table->unsignedTinyInteger('tech_stack_proficiency_id');
             $table->timestamps();
         });
     }
