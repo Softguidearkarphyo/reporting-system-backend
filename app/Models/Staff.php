@@ -12,14 +12,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Staff extends Model
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
-    //
-    // Enable timestamps
+
     public $timestamps = true;
 
-    // Optional: specify table name (if it's not plural or different)
     protected $table = 'staffs';
 
-    // Fillable fields for mass-assignment
     protected $fillable = [
         'staff_no',
         'eng_name',
@@ -36,9 +33,11 @@ class Staff extends Model
         'ref_ph_number',
         'project',
         'sort_key',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
-    // If you want password to be hidden in JSON responses
     protected $hidden = ['password'];
 
     public function staffProjects(): HasMany
@@ -48,5 +47,10 @@ class Staff extends Model
             'staff_id',
             'id'
         )->whereNull('deleted_at');
+    }
+
+    public function skillSheet()
+    {
+        return $this->hasOne(SkillSheet::class);
     }
 }

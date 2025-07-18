@@ -17,6 +17,7 @@ class StaffResource extends JsonResource
         return  [
             'id'                => $this->id,
             'staff_no'          => $this->staff_no,
+            'staff_project'     => $this->staffProjects,
             'eng_name'          => $this->eng_name,
             'jp_name'           => $this->jp_name,
             'username'          => $this->username,
@@ -28,7 +29,6 @@ class StaffResource extends JsonResource
             'permanent_date'    => $this->permanent_date,
             'ref_person'        => $this->ref_person,
             'ref_ph_number'     => $this->ref_ph_number,
-            'project'           => $this->project,
             'sort_key'          => $this->sort_key,
         ];
     }
