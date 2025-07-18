@@ -53,7 +53,7 @@ class StaffController extends Controller
                 "permanent_date"    => $data['permanent_date'],
                 "ref_person"        => $data['ref_person'] ?? null,
                 "ref_ph_number"     => $data['ref_ph_number'] ?? null,
-                "sort_key"          => $data['sort_key']
+                "sort_key"          => $data['sort_key'] ?? null,
             ];
             $staff = new StaffResource(Staff::create($createData));
             if (!empty($data['project']) && is_array($data['project'])) {
@@ -91,9 +91,9 @@ class StaffController extends Controller
                 "role"              => $data['role'],
                 "email"             => $data['email'],
                 "permanent_date"    => $data['permanent_date'],
-                "ref_person"        => $data['ref_person'],
-                "ref_ph_number"     => $data['ref_ph_number'],
-                "sort_key"          => $data['sort_key']
+                "ref_person"        => $data['ref_person'] ?? null,
+                "ref_ph_number"     => $data['ref_ph_number'] ?? null,
+                "sort_key"          => $data['sort_key'] ?? null,
             ];
             if (!empty($data['password'])) {
                 $updateData['password'] = Hash::make($data['password']);
