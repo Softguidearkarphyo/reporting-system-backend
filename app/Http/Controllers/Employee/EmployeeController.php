@@ -4,14 +4,14 @@ namespace App\Http\Controllers\Employee;
 
 use App\ReturnMessage;
 use App\Utility;
+use App\Models\SkillSheet;
+use App\Models\StaffProject;
+use App\Models\StaffResponsibility;
+use App\Models\TechStackProficiency;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\EmployeeAddSkillRequest;
-use App\Http\Resources\Employee\AddEmployeeSkillResource;
-use App\Models\SkillSheet;
+use App\Http\Resources\Employee\SkillSheetResource;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-
-
 
 class EmployeeController extends Controller
 {
@@ -24,59 +24,76 @@ class EmployeeController extends Controller
                 $query->where('id', $data['id']);
             }
             $data = $query->get();
-            return AddEmployeeSkillResource::collection($data);
+            $skillSheet =  SkillSheetResource::collection($data);
+            return response()->json($skillSheet);
         } catch (\Throwable  $e) {
-            Utility::log("ProjectController::get", $e->getMessage());
+            Utility::log("EmployeeController::getSkillSheet", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
-
 
     public function create(EmployeeAddSkillRequest $request)
     {
         DB::beginTransaction();
         try {
             $data = $request->all();
-            $columns = Schema::getColumnListing('skills');
-            $nonSkillCols = ['id', 'created_at', 'updated_at'];
-            $skillColumns = array_diff($columns, $nonSkillCols);
-
-            function normalizeSkillName($name)
-            {
-                $exceptions = ['AWS S3'];
-                if (in_array($name, $exceptions)) {
-                    return $name;
+            StaffProject::where('staff_id', $data['staff_id'])->delete();
+            if (!empty($data['project']) && is_array($data['project'])) {
+                $insertData = [];
+                foreach ($data['project'] as $projectId) {
+                    $insertData[] = [
+                        'staff_id'   => $data['staff_id'],
+                        'project_id' => $projectId,
+                    ];
                 }
-                return str_replace(['.', ' '], '', $name);
+                StaffProject::insert($insertData);
+            }
+            StaffResponsibility::where('staff_id', $data['staff_id'])->delete();
+            if (!empty($data['responsibility']) && is_array($data['responsibility'])) {
+                $insertData = [];
+                foreach ($data['responsibility'] as $responsibilityId) {
+                    $insertData[] = [
+                        'staff_id'          => $data['staff_id'],
+                        'responsibility_id' => $responsibilityId,
+                    ];
+                }
+                StaffResponsibility::insert($insertData);
+            }
+            if (!empty($data['skills']) && is_array($data['skills'])) {
+                $insertData = [];
+                foreach ($data['skills'] as $skill) {
+                    if (
+                        isset($skill['tech_stack_id'], $skill['proficiency_level_id']) &&
+                        $skill['tech_stack_id'] !== null &&
+                        $skill['proficiency_level_id'] !== null
+                    ) {
+                        $insertData[] = [
+                            'staff_id'             => $data['staff_id'],
+                            'tech_stack_id'        => $skill['tech_stack_id'],
+                            'proficiency_level_id' => $skill['proficiency_level_id'],
+                        ];
+                    }
+                }
+                TechStackProficiency::insert($insertData);
             }
 
-            $skillInsertData = array_fill_keys($skillColumns, null);
-            foreach ($data['skills'] as $skill) {
-                $col = normalizeSkillName($skill['name']);
-                if (in_array($col, $skillColumns)) {
-                    $skillInsertData[$col] = $skill['symbol'];
-                }
-            }
-            // $skill = Skill::create($skillInsertData);
             $insertData = [
-                "staff_id"         => $data['name'],
-                "position"         => $data['position'],
-                "grade"            => $data['grade'],
-                "join_date"        => $data['join_date'],
-                "sg_experience"    => $data['sg_experience'],
-                "prev_experience"  => $data['prev_experience'],
-                "total_experience" => $data['total_experience'],
-                "japanese_level"   => $data['japanese_level'],
-                "expertise"        => $data['expertise'],
-                "skill_id"         => $skill->id
+                "staff_id"             => $data['staff_id'],
+                "position_id"          => $data['position'],
+                "grade_id"             => $data['grade'],
+                "join_date"            => $data['join_date'],
+                "sg_experience"        => $data['sg_experience'],
+                "prev_experience"      => $data['prev_experience'],
+                "total_experience"     => $data['total_experience'],
+                "japanese_level_id"    => $data['japanese_level'],
+                "major_tech_stack_id"  => $data['major_tech_stack_id'],
             ];
-            // dd($insertData);
-            // SkillSet::create($insertData);
+            SkillSheet::create($insertData);
             DB::commit();
             return ["status" => ReturnMessage::OK];
         } catch (\Throwable  $e) {
             DB::rollBack();
-            Utility::log("EmployeeController::create", $e->getMessage());
+            Utility::log("EmployeeController::createSkillSheet", $e->getMessage());
             return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
         }
     }

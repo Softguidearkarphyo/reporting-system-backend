@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Task\TaskController;
 use App\Http\Controllers\Staff\StaffController;
 use App\Http\Controllers\Project\ProjectController;
+use App\Http\Controllers\SystemManagementController;
 use App\Http\Controllers\Employee\EmployeeController;
 
 
@@ -21,9 +22,17 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/update', [ProjectController::class, 'update']);
         Route::post('/delete', [ProjectController::class, 'delete']);
     });
-    Route::prefix('/employee')->group(function () {
-        Route::post('/get-skill', [EmployeeController::class, 'get']);
-        Route::post('/add-skill', [EmployeeController::class, 'create']);
+    Route::prefix('/employee-skill-sheet')->group(function () {
+        Route::post('/get', [EmployeeController::class, 'get']);
+        Route::post('/create', [EmployeeController::class, 'create']);
+    });
+    Route::prefix('/sys-management')->group(function () {
+        Route::post('/get-tech-stack', [SystemManagementController::class, 'getTechStack']);
+        Route::post('/get-grade', [SystemManagementController::class, 'getGrade']);
+        Route::post('/get-position', [SystemManagementController::class, 'getPosition']);
+        Route::post('/get-japanese-level', [SystemManagementController::class, 'getJapaneseLevel']);
+        Route::post('/get-proficiency-level', [SystemManagementController::class, 'getProficiencyLevel']);
+        Route::post('/get-responsibility', [SystemManagementController::class, 'getResponsibility']);
     });
     Route::prefix('/task')->group(function () {
         Route::post('/get', [TaskController::class, 'get']);

@@ -4,15 +4,17 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-use Illuminate\Database\Seeder;
-use App\Models\ProficiencyLevel;
-use Database\Seeders\Task\TaskSeeder;
-use Database\Seeders\Staff\StaffSeeder;
-use Database\Seeders\Project\ProjectSeeder;
-use Database\Seeders\TechStack\TechStackSeeder;
-use Database\Seeders\StaffProject\StaffProjectSeeder;
-use Database\Seeders\Responsibility\ResponsibilitySeeder;
+use Database\Seeders\Grade\GradeSeeder;
+use Database\Seeders\JapaneseLevel\JapaneseLevelSeeder;
+use Database\Seeders\Position\PositionSeeder;
 use Database\Seeders\ProficiencyLevel\ProficiencyLevelSeeder;
+use Database\Seeders\Project\ProjectSeeder;
+use Database\Seeders\Responsibility\ResponsibilitySeeder;
+use Database\Seeders\Staff\StaffSeeder;
+use Database\Seeders\StaffProject\StaffProjectSeeder;
+use Database\Seeders\Task\TaskSeeder;
+use Database\Seeders\TechStack\TechStackSeeder;
+use Illuminate\Database\Seeder;
 
 
 class DatabaseSeeder extends Seeder
@@ -31,7 +33,10 @@ class DatabaseSeeder extends Seeder
             ResponsibilitySeeder::class,
             TechStackSeeder::class,
             ProficiencyLevelSeeder::class,
-            TaskSeeder::class
+            TaskSeeder::class,
+            PositionSeeder::class,
+            GradeSeeder::class,
+            JapaneseLevelSeeder::class
         ]);
     }
 }

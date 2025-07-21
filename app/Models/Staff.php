@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\SkillSheet;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\StaffResponsibility;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -49,11 +52,14 @@ class Staff extends Model
         )->whereNull('deleted_at');
     }
 
-    public function skillSheet()
+    public function skillSheet(): HasOne
     {
-        return $this->hasOne(SkillSheet::class);
+        return $this->hasOne(SkillSheet::class, 'staff_id', 'id');
     }
-
+    public function staffResponsibility(): HasMany
+    {
+        return $this->hasMany(StaffResponsibility::class, 'staff_id', 'id');
+    }
     public function taskPerformance(): HasMany
     {
         return $this->hasMany(

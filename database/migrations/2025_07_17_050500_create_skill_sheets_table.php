@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('skill_sheets', function (Blueprint $table) {
             $table->id();
             $table->unsignedTinyInteger('staff_id');
-            $table->string('grade');
+            $table->unsignedTinyInteger('position_id');
+            $table->unsignedTinyInteger('grade_id');
             $table->date('join_date');
-            $table->unsignedTinyInteger('japanese_level');
             $table->unsignedTinyInteger('sg_experience');
             $table->unsignedTinyInteger('prev_experience');
             $table->unsignedTinyInteger('total_experience');
-            $table->string('expertise');
-            $table->unsignedTinyInteger('tech_stack_proficiency_id');
+            $table->unsignedTinyInteger('japanese_level_id');
+            $table->unsignedTinyInteger('major_tech_stack_id');
             $table->timestamps();
         });
     }
