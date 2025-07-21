@@ -39,6 +39,16 @@ class SkillSheet extends Model
         return $this->belongsTo(Position::class, 'position_id', 'id');
     }
 
+    public function staffProejct(): HasMany
+    {
+        return $this->hasMany(StaffProject::class, 'staff_id', 'staff_id');
+    }
+
+    public function staffResponsibility(): HasMany
+    {
+        return $this->hasMany(StaffResponsibility::class, 'staff_id', 'staff_id');
+    }
+
     public function grade(): BelongsTo
     {
         return $this->belongsTo(Grade::class, 'grade_id', 'id');
