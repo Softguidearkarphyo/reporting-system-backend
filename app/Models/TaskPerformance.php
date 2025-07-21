@@ -15,7 +15,7 @@ class TaskPerformance extends Model
 
     public $timestamps = true;
 
-    protected $table = 'tasks';
+    protected $table = 'task_performance';
 
     protected $fillable = [
         'date',

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('task_performance', function (Blueprint $table) {
             $table->id();
+            $table->date('date');
             $table->foreignId('staff_id')
                 ->constrained('staffs')
                 ->onDelete('cascade');

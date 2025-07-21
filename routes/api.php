@@ -7,6 +7,7 @@ use App\Http\Controllers\Staff\StaffController;
 use App\Http\Controllers\Project\ProjectController;
 use App\Http\Controllers\SystemManagementController;
 use App\Http\Controllers\Employee\EmployeeController;
+use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -36,6 +37,9 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     });
     Route::prefix('/task')->group(function () {
         Route::post('/get', [TaskController::class, 'get']);
+    });
+    Route::prefix('/task-performance')->group(function () {
+        Route::post('/create', [TaskPerformanceController::class, 'create']);
     });
 });
 
