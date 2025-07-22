@@ -20,6 +20,7 @@ return new class extends Migration
                 ->constrained('projects')
                 ->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes()->nullable();
 
             $table->unique(['staff_id', 'project_id']);
         });
