@@ -33,6 +33,6 @@ class Task extends Model
             TaskPerformance::class,
             'task_id',
             'id'
-        )->whereNull('deleted_at');
+        );
     }
 }

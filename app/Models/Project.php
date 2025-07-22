@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\StaffProject;
+use App\Models\TaskPerformance;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -41,6 +43,6 @@ class Project extends Model
             TaskPerformance::class,
             'project_id',
             'id'
-        )->whereNull('deleted_at');
+        );
     }
 }

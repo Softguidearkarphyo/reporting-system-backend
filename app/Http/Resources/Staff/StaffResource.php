@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Staff;
 
+use App\Http\Resources\Reporting\TaskPerformanceResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,6 +33,13 @@ class StaffResource extends JsonResource
             'ref_person'        => $this->ref_person,
             'ref_ph_number'     => $this->ref_ph_number,
             'sort_key'          => $this->sort_key,
+            'task_performance'  => $this->when(
+                isset($data['task_performance']),
+                TaskPerformanceResource::collection($this->taskPerformance),
+            ),
+            'created_at'        => $this->created_at,
+            'updated_at'        => $this->updated_at,
+            'deleted_at'        => $this->deleted_at,
         ];
     }
 }

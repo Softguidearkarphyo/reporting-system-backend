@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Task;
+use App\Models\Staff;
+use App\Models\Project;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TaskPerformance extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable;
 
     public $timestamps = true;
 
@@ -23,9 +25,6 @@ class TaskPerformance extends Model
         'project_id',
         'task_id',
         'period',
-        'created_at',
-        'updated_at',
-        'deleted_at',
     ];
 
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\SkillSheet;
+use App\Models\TaskPerformance;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\StaffResponsibility;
 use Illuminate\Database\Eloquent\Model;
@@ -66,6 +67,6 @@ class Staff extends Model
             TaskPerformance::class,
             'staff_id',
             'id'
-        )->whereNull('deleted_at');
+        );
     }
 }

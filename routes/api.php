@@ -41,6 +41,7 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     });
     Route::prefix('/task-performance')->group(function () {
         Route::post('/create', [TaskPerformanceController::class, 'create']);
+        Route::post('/delete', [TaskPerformanceController::class, 'delete']);
     });
 });
 

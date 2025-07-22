@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Staff;
+namespace App\Http\Requests\Reporting;
 
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StaffGetRequest extends FormRequest
+class TaskPerformanceDeleteRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +23,9 @@ class StaffGetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "id"                => ["integer", "exists:staffs,id"],
-            "task_performance"  => ["nullable"],
-            "project"           => ["nullable"],
-            "task"              => ["nullable"],
+            "delete_array"                  => ["required", "array"],
+            "delete_array.*.date"           => ["required", "date", "date_format:Y-m-d"],
+            "delete_array.*.staff_id"       => ["required", "integer", "exists:staffs,id"],
         ];
     }
 }

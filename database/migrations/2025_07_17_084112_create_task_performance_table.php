@@ -24,8 +24,6 @@ return new class extends Migration
                 ->constrained('tasks')
                 ->onDelete('cascade');
             $table->time('period');
-            $table->timestamps();
-            $table->softDeletes()->nullable();
         });
     }
 
