@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Employee;
+namespace App\Http\Controllers\SkillSheet;
 
 use App\ReturnMessage;
 use App\Utility;
@@ -9,13 +9,14 @@ use App\Models\StaffProject;
 use App\Models\StaffResponsibility;
 use App\Models\TechStackProficiency;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Employee\EmployeeAddSkillRequest;
-use App\Http\Resources\Employee\SkillSheetResource;
+use App\Http\Requests\SkillSheet\SkillSheetCreateRequest;
+use App\Http\Requests\SkillSheet\SkillSheetGetRequest;
+use App\Http\Resources\SkillSheet\SkillSheetResource;
 use Illuminate\Support\Facades\DB;
 
-class EmployeeController extends Controller
+class SkillSheetController extends Controller
 {
-    public function get(EmployeeAddSkillRequest $request)
+    public function get(SkillSheetGetRequest $request)
     {
         try {
             $data   = $request->all();
@@ -27,12 +28,12 @@ class EmployeeController extends Controller
             $skillSheet =  SkillSheetResource::collection($data);
             return response()->json($skillSheet);
         } catch (\Throwable  $e) {
-            Utility::log("EmployeeController::getSkillSheet", $e->getMessage());
+            Utility::log("SkillSheetController::getSkillSheet", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function create(EmployeeAddSkillRequest $request)
+    public function create(SkillSheetCreateRequest $request)
     {
         DB::beginTransaction();
         try {
@@ -93,7 +94,7 @@ class EmployeeController extends Controller
             return ["status" => ReturnMessage::OK];
         } catch (\Throwable  $e) {
             DB::rollBack();
-            Utility::log("EmployeeController::createSkillSheet", $e->getMessage());
+            Utility::log("SkillSheetController::createSkillSheet", $e->getMessage());
             return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
         }
     }

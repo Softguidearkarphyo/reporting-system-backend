@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Employee;
+namespace App\Http\Requests\SkillSheet;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EmployeeAddSkillRequest extends FormRequest
+class SkillSheetGetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,7 @@ class EmployeeAddSkillRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "id" => ["integer", "exists:skill_sheets,id"],
         ];
     }
 }

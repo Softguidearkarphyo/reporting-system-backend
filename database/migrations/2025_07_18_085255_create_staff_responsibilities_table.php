@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('responsibility_id')->constrained('responsibilities')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes()->nullable();
+
+            $table->unique(['staff_id', 'responsibility_id']);
         });
     }
 

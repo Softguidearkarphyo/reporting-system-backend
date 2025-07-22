@@ -5,13 +5,21 @@ namespace App\Models;
 use App\Models\Staff;
 use App\Models\Position;
 use App\Models\TechStack;
+use Laravel\Sanctum\HasApiTokens;
 use App\Models\TechStackProficiency;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SkillSheet extends Model
 {
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    public $timestamps = true;
+
     protected $table = 'skill_sheets';
 
     protected $fillable = [
@@ -29,7 +37,7 @@ class SkillSheet extends Model
         'deleted_at',
     ];
 
-    public function staff()
+    public function staff(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'staff_id', 'id');
     }
@@ -37,16 +45,6 @@ class SkillSheet extends Model
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class, 'position_id', 'id');
-    }
-
-    public function staffProejct(): HasMany
-    {
-        return $this->hasMany(StaffProject::class, 'staff_id', 'staff_id');
-    }
-
-    public function staffResponsibility(): HasMany
-    {
-        return $this->hasMany(StaffResponsibility::class, 'staff_id', 'staff_id');
     }
 
     public function grade(): BelongsTo
@@ -59,9 +57,19 @@ class SkillSheet extends Model
         return $this->belongsTo(JapaneseLevel::class, 'japanese_level_id', 'id');
     }
 
-    public function techStack()
+    public function techStack(): BelongsTo
     {
         return $this->belongsTo(TechStack::class, 'major_tech_stack_id', 'id');
+    }
+
+    public function staffProejct(): HasMany
+    {
+        return $this->hasMany(StaffProject::class, 'staff_id', 'staff_id')->whereNull('deleted_at');
+    }
+
+    public function staffResponsibility(): HasMany
+    {
+        return $this->hasMany(StaffResponsibility::class, 'staff_id', 'staff_id')->whereNull('deleted_at');
     }
 
     public function techStackProficiencies(): HasMany

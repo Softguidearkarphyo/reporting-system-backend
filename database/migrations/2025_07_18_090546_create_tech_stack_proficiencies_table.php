@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('tech_stack_id')->constrained('tech_stacks')->onDelete('cascade');
             $table->foreignId('proficiency_level_id')->constrained('proficiency_levels')->onDelete('cascade');
             $table->timestamps();
+
+            $table->unique(['staff_id', 'tech_stack_id']);
         });
     }
 

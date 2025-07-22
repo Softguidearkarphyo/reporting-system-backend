@@ -58,7 +58,7 @@ class Staff extends Model
     }
     public function staffResponsibility(): HasMany
     {
-        return $this->hasMany(StaffResponsibility::class, 'staff_id', 'id');
+        return $this->hasMany(StaffResponsibility::class, 'staff_id', 'id')->whereNull('deleted_at');
     }
     public function taskPerformance(): HasMany
     {

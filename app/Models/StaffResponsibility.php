@@ -5,10 +5,18 @@ namespace App\Models;
 use App\Models\Staff;
 use App\Models\Responsibility;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class StaffResponsibility extends Model
 {
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    public $timestamps = true;
+
     protected $table = 'staff_responsibilities';
 
     protected $fillable = [

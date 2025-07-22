@@ -14,10 +14,12 @@ class StaffResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $data = $request->all();
         return  [
             'id'                => $this->id,
             'staff_no'          => $this->staff_no,
             'staff_project'     => $this->staffProjects,
+            'skill_sheet'       => $this->when(isset($data['skill_sheet']), $this->skillSheet),
             'eng_name'          => $this->eng_name,
             'jp_name'           => $this->jp_name,
             'username'          => $this->username,

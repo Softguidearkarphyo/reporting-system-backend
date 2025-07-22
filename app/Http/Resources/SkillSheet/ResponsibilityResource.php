@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\Employee;
+namespace App\Http\Resources\SkillSheet;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TechStackResource extends JsonResource
+class ResponsibilityResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

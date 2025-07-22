@@ -23,6 +23,9 @@ return new class extends Migration
             $table->unsignedTinyInteger('japanese_level_id');
             $table->unsignedTinyInteger('major_tech_stack_id');
             $table->timestamps();
+            $table->softDeletes()->nullable();
+
+            $table->unique('staff_id');
         });
     }
 

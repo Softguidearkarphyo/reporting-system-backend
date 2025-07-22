@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Employee;
+namespace App\Http\Resources\SkillSheet;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,10 +17,10 @@ class SkillSheetResource extends JsonResource
         return  [
             'id'                => $this->id,
             'staff'             => $this->staff,
-            'project'           => $this->staffProejct->map(function ($item) {
+            'staff_project'     => $this->staffProejct->map(function ($item) {
                 return [
-                    'id'   => $item->id,
-                    'name' => $item->project->name,
+                    'id'      => $item->id,
+                    'project' => $item->project
                 ];
             }),
             'position'          => $this->position,
@@ -29,10 +29,10 @@ class SkillSheetResource extends JsonResource
             'sg_experience'     => $this->sg_experience,
             'prev_experience'   => $this->prev_experience,
             'total_experience'  => $this->total_experience,
-            'responsibility'    => $this->staffProejct->map(function ($item) {
+            'staff_responsibility' => $this->staffResponsibility->map(function ($item) {
                 return [
-                    'id'              => $item->id,
-                    'tech_stack_name' => $item->project->name,
+                    'id' => $item->id,
+                    'responsibility' => $item->responsibility
                 ];
             }),
             'japanese_level'    => $this->japaneseLevel,

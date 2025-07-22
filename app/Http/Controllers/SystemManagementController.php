@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Utility;
 use App\ReturnMessage;
-use App\Models\TechStack;
-use Illuminate\Http\Request;
-use App\Models\Responsibility;
-use App\Models\ProficiencyLevel;
-use App\Http\Resources\Employee\TechStackResource;
-use App\Http\Resources\Employee\ResponsibilityResource;
-use App\Http\Resources\Employee\ProficiencyLevelResource;
-use App\Http\Resources\Grade\GradeResource;
-use App\Http\Resources\Japanese\JapaneseLevelResource;
-use App\Http\Resources\Position\PositionResource;
 use App\Models\Grade;
 use App\Models\JapaneseLevel;
 use App\Models\Position;
+use App\Models\ProficiencyLevel;
+use App\Models\Responsibility;
+use App\Models\TechStack;
+use App\Http\Resources\Grade\GradeResource;
+use App\Http\Resources\Japanese\JapaneseLevelResource;
+use App\Http\Resources\Position\PositionResource;
+use App\Http\Resources\SkillSheet\TechStackResource;
+use App\Http\Resources\SkillSheet\ResponsibilityResource;
+use App\Http\Resources\SkillSheet\ProficiencyLevelResource;
+
 
 class SystemManagementController extends Controller
 {

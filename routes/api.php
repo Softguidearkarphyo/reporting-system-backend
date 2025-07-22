@@ -1,13 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Task\TaskController;
-use App\Http\Controllers\Staff\StaffController;
-use App\Http\Controllers\Project\ProjectController;
 use App\Http\Controllers\SystemManagementController;
-use App\Http\Controllers\Employee\EmployeeController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Project\ProjectController;
+use App\Http\Controllers\Staff\StaffController;
+use App\Http\Controllers\SkillSheet\SkillSheetController;
 use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
+use App\Http\Controllers\Task\TaskController;
+use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -24,8 +24,8 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/delete', [ProjectController::class, 'delete']);
     });
     Route::prefix('/employee-skill-sheet')->group(function () {
-        Route::post('/get', [EmployeeController::class, 'get']);
-        Route::post('/create', [EmployeeController::class, 'create']);
+        Route::post('/get', [SkillSheetController::class, 'get']);
+        Route::post('/create', [SkillSheetController::class, 'create']);
     });
     Route::prefix('/sys-management')->group(function () {
         Route::post('/get-tech-stack', [SystemManagementController::class, 'getTechStack']);

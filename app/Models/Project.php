@@ -21,6 +21,9 @@ class Project extends Model
         'cd',
         'eng_name',
         'jp_name',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
     public function staffProjects(): HasMany
