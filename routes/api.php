@@ -26,6 +26,7 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/employee-skill-sheet')->group(function () {
         Route::post('/get', [SkillSheetController::class, 'get']);
         Route::post('/create', [SkillSheetController::class, 'create']);
+        Route::post('/update', [SkillSheetController::class, 'update']);
     });
     Route::prefix('/sys-management')->group(function () {
         Route::post('/get-tech-stack', [SystemManagementController::class, 'getTechStack']);
