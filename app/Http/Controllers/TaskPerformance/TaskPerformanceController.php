@@ -19,15 +19,7 @@ class TaskPerformanceController extends Controller
             $data = $request->all();
             if ($data['create_array']) {
                 $insertData = $data['create_array'];
-                $keys = collect($insertData)
-                    ->map(fn($item) => ['date' => $item['date'], 'staff_id' => $item['staff_id']])
-                    ->unique()
-                    ->values();
-                foreach ($keys as $key) {
-                    TaskPerformance::where('date', $key['date'])
-                        ->where('staff_id', $key['staff_id'])->delete();
-                };
-                TaskPerformance::insert($insertData);
+                TaskPerformance::upsert($insertData, ['date', 'staff_id', 'period'], ['project_id', 'task_id']);
                 DB::commit();
             }
             return response()->json([]);
@@ -47,7 +39,8 @@ class TaskPerformanceController extends Controller
                 $deleteData = $data['delete_array'];
                 foreach ($deleteData as $deleteDatum) {
                     TaskPerformance::where('date', $deleteDatum['date'])
-                        ->where('staff_id', $deleteDatum['staff_id'])->delete();
+                        ->where('staff_id', $deleteDatum['staff_id'])
+                        ->where('period', $deleteDatum['period'])->delete();
                 };
                 DB::commit();
             }

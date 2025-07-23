@@ -15,7 +15,7 @@ class TaskPerformance extends Model
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    public $timestamps = true;
+    public $timestamps = false;
 
     protected $table = 'task_performance';
 
