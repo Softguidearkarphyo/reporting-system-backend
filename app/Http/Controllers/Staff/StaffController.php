@@ -114,7 +114,7 @@ class StaffController extends Controller
                 StaffProject::insert($insertData);
             }
             DB::commit();
-            return ["status" => ReturnMessage::OK];
+            return ["status" => ReturnMessage::OK, 'staff' => $Staff];
         } catch (\Throwable  $e) {
             DB::rollBack();
             Utility::log("MemberController::update", $e->getMessage());
