@@ -4,7 +4,7 @@ setup:
 	sudo apt update && sudo apt install -y composer
 	sudo apt install -y php8.3-dom php8.3-xml
 	cp -n .env.example .env
-	composer install
+	composer update
 	./vendor/bin/sail up -d
 	docker-compose exec reporting-system php artisan key:generate
 	docker-compose exec reporting-system php artisan migrate:fresh
