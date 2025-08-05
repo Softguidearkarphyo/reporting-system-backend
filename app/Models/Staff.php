@@ -69,4 +69,12 @@ class Staff extends Model
             'id'
         );
     }
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class, 'staff_id');
+    }
+    public function leaves_record()
+    {
+        return $this->hasMany(Leave::class, 'staff_id');
+    }
 }

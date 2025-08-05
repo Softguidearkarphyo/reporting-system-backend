@@ -49,7 +49,24 @@ services:
             test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD:-password}"]
             retries: 3
             timeout: 5s
-
+    scheduler:
+        build:
+            context: ./vendor/laravel/sail/runtimes/8.4
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: "${WWWGROUP:-1000}"
+        container_name: scheduler
+        restart: unless-stopped
+        user: root
+        volumes:
+            - .:/var/www/html
+            - ./storage/logs/cron.log:/var/log/cron.log
+        environment: 
+            TZ: "Asia/Yangon"
+            APP_TIMEZONE: "Asia/Yangon"
+        depends_on:
+            - reporting-system
+        command: ["cron", "-f"]
 networks:
     sail:
         driver: bridge

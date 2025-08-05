@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-
+use Database\Seeders\Leave\LeaveSeeder;
 use Database\Seeders\Grade\GradeSeeder;
 use Database\Seeders\JapaneseLevel\JapaneseLevelSeeder;
 use Database\Seeders\Position\PositionSeeder;
@@ -36,7 +36,8 @@ class DatabaseSeeder extends Seeder
             TaskSeeder::class,
             PositionSeeder::class,
             GradeSeeder::class,
-            JapaneseLevelSeeder::class
+            JapaneseLevelSeeder::class,
+            LeaveSeeder::class
         ]);
     }
 }

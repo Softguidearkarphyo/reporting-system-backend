@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\SystemManagementController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Leave\LeaveController;
+use App\Http\Controllers\LeaveRecord\LeaveRecordController;
+use App\Http\Controllers\OverTime\OverTimeController;
 use App\Http\Controllers\Project\ProjectController;
 use App\Http\Controllers\Staff\StaffController;
 use App\Http\Controllers\SkillSheet\SkillSheetController;
@@ -42,6 +45,18 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/task-performance')->group(function () {
         Route::post('/create', [TaskPerformanceController::class, 'create']);
         Route::post('/delete', [TaskPerformanceController::class, 'delete']);
+    });
+    Route::prefix('/leave')->group(function () {
+        Route::post('/get', [LeaveController::class, 'get']);
+        Route::post('/create', [LeaveController::class, 'create']);
+    });
+    Route::prefix('/leave-record')->group(function () {
+        Route::post('/get', [LeaveRecordController::class, 'get']);
+        Route::post('/create', [LeaveRecordController::class, 'create']);
+    });
+    Route::prefix('/over-time')->group(function () {
+        Route::post('/get', [OverTimeController::class, 'get']);
+        Route::post('/create', [OverTimeController::class, 'create']);
     });
 });
 
