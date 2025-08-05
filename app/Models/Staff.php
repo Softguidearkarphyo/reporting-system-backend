@@ -69,4 +69,8 @@ class Staff extends Model
             'id'
         );
     }
+    public function staffFine(): HasMany
+    {
+        return $this->hasMany(StaffFine::class, 'staff_id', 'id');
+    }
 }
