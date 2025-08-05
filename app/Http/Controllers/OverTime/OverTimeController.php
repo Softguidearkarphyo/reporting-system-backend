@@ -30,4 +30,15 @@ class OverTimeController extends Controller
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
+    public function create(OverTimeCreateRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            $data = $request->all();
+        } catch (\Throwable  $e) {
+            DB::rollBack();
+            Utility::log("LeaveController::create", $e->getMessage());
+            return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
+        }
+    }
 }
