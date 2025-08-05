@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Reporting;
+namespace App\Http\Requests\Staff;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class TaskGetRequest extends FormRequest
+class StaffFineDeleteRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,6 +21,8 @@ class TaskGetRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+            "id" => ["required", "integer", "exists:staff_fines,id"],
+        ];
     }
 }

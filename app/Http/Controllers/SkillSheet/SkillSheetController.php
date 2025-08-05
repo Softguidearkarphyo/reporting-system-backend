@@ -105,7 +105,6 @@ class SkillSheetController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->all();
-            // dd($data);
             StaffProject::where('staff_id', $data['staff_id'])->delete();
             if (!empty($data['project']) && is_array($data['project'])) {
                 $insertData = [];

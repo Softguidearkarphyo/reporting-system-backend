@@ -20,16 +20,16 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
             $staff = Staff::where('username', $credentials['username'])->first();
-            
+
             if (!$staff) {
                 return response()->json([
                     'message' => "Username does not match!",
-                ],422);
+                ], 422);
             }
             if (!Hash::check($credentials['password'], $staff->password)) {
                 return response()->json([
                     'message' => 'Password is incorrect',
-                ],401);  
+                ], 401);
             }
             $token = $staff->createToken('staff-token')->plainTextToken;
             return response()->json([

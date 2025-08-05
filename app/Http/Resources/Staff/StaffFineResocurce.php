@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\Reporting;
+namespace App\Http\Resources\Staff;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TaskResource extends JsonResource
+class StaffFineResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,14 +14,17 @@ class TaskResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $data = $request->all();
         return  [
             'id'                => $this->id,
-            'cd'                => $this->cd,
-            'eng_name'          => $this->eng_name,
-            'jp_name'           => $this->jp_name,
+            'staff_id'          => $this->staff_id,
+            'staff_name'        => $this->staff->eng_name,
+            'amount'            => $this->amount,
+            'date'              => $this->date,
+            'time'              => $this->time,
+            'status'            => $this->status,
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
-            'deleted_at'        => $this->deleted_at,
         ];
     }
 }

@@ -43,6 +43,12 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/create', [TaskPerformanceController::class, 'create']);
         Route::post('/delete', [TaskPerformanceController::class, 'delete']);
     });
+    Route::prefix('/fines')->group(function () {
+        Route::post('/create', [StaffController::class, 'createFines']);
+        Route::get('/get', [StaffController::class, 'getFines']);
+        Route::post('/delete', [StaffController::class, 'deleteFines']);
+        Route::post('/status-change', [StaffController::class, 'statusChange']);
+    });
 });
 
 Route::get('/user', [AuthController::class, 'user']);
