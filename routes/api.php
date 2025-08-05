@@ -45,7 +45,7 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     });
     Route::prefix('/fines')->group(function () {
         Route::post('/create', [StaffController::class, 'createFines']);
-        Route::get('/get', [StaffController::class, 'getFines']);
+        Route::post('/get', [StaffController::class, 'getFines']);
         Route::post('/delete', [StaffController::class, 'deleteFines']);
         Route::post('/status-change', [StaffController::class, 'statusChange']);
     });

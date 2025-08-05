@@ -14,17 +14,14 @@ class StaffFineResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $data = $request->all();
-        return  [
+        return [
             'id'                => $this->id,
             'staff_id'          => $this->staff_id,
-            'staff_name'        => $this->staff->eng_name,
-            'amount'            => $this->amount,
             'date'              => $this->date,
             'time'              => $this->time,
+            'amount'            => $this->amount,
             'status'            => $this->status,
-            'created_at'        => $this->created_at,
-            'updated_at'        => $this->updated_at,
+            'staff'             => new StaffResource($this->staff),
         ];
     }
 }

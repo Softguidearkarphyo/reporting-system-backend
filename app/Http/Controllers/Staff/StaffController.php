@@ -189,12 +189,13 @@ class StaffController extends Controller
     public function getFines()
     {
         try {
+            $query = StaffFine::query();
             $startDate = Carbon::now()->startOfMonth()->subMonth();
             $endDate = Carbon::now()->endOfMonth();
 
-            $staffFines = StaffFine::with('staff')
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+            $staffFines = $query->whereHas('staff')
+                ->whereBetween('date', [$startDate, $endDate])->get();
+            $staffFines = StaffFineResource::collection($staffFines);
             return response()->json(["data" => $staffFines]);
         } catch (\Throwable  $e) {
             Utility::log("MemberController::getFines", $e->getMessage());
