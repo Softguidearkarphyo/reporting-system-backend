@@ -11,16 +11,16 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class TaskPerformance extends Model
+class TaskPerformanceSetting extends Model
 {
     use HasApiTokens, HasFactory, Notifiable;
 
     public $timestamps = false;
 
-    protected $table = 'task_performance';
+    protected $table = 'task_performance_settings';
 
     protected $fillable = [
-        'date',
+        'day',
         'staff_id',
         'project_id',
         'task_id',

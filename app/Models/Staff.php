@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\SkillSheet;
 use App\Models\OverTime;
+use App\Models\SkillSheet;
 use App\Models\TaskPerformance;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\StaffResponsibility;
+use App\Models\TaskPerformanceSetting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -66,6 +67,14 @@ class Staff extends Model
     {
         return $this->hasMany(
             TaskPerformance::class,
+            'staff_id',
+            'id'
+        );
+    }
+    public function taskPerformanceSetting(): HasMany
+    {
+        return $this->hasMany(
+            TaskPerformanceSetting::class,
             'staff_id',
             'id'
         );

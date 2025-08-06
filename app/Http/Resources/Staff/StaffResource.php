@@ -2,9 +2,10 @@
 
 namespace App\Http\Resources\Staff;
 
-use App\Http\Resources\Reporting\TaskPerformanceResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Reporting\TaskPerformanceResource;
+use App\Http\Resources\Reporting\TaskPerformanceSettingResource;
 
 class StaffResource extends JsonResource
 {
@@ -36,6 +37,10 @@ class StaffResource extends JsonResource
             'task_performance'  => $this->when(
                 isset($data['task_performance']),
                 TaskPerformanceResource::collection($this->taskPerformance),
+            ),
+            'task_performance_setting'  => $this->when(
+                isset($data['task_performance_setting']),
+                TaskPerformanceSettingResource::collection($this->taskPerformanceSetting),
             ),
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
