@@ -23,7 +23,8 @@ class OverTimeCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'staff_id'   => [Rule::unique('', 'staff_id')],
+            'ot_date'    => ['required', 'date'],
+            'ot_time'    => ['required'],
         ];
     }
 }

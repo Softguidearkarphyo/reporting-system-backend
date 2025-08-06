@@ -17,6 +17,7 @@ class LeaveRecord extends Model
         'updated_at',
         'deleted_at',
     ];
+
     public function staff()
     {
         return $this->belongsTo(Staff::class, 'staff_id');

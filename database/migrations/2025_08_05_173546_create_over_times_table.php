@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('over_time', function (Blueprint $table) {
+        Schema::create('over_times', function (Blueprint $table) {
             $table->id();
             $table->foreignId('staff_id')->constrained('staffs')->onDelete('cascade');
             $table->date('ot_date')->nullable();
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('over_time');
+        Schema::dropIfExists('over_times');
     }
 };

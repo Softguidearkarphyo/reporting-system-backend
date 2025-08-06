@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\SkillSheet;
+use App\Models\OverTime;
 use App\Models\TaskPerformance;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\StaffResponsibility;
@@ -76,5 +77,9 @@ class Staff extends Model
     public function leaves_record()
     {
         return $this->hasMany(Leave::class, 'staff_id');
+    }
+    public function over_times()
+    {
+        return $this->hasMany(OverTime::class, 'staff_id');
     }
 }

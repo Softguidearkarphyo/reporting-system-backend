@@ -22,8 +22,6 @@ class LeaveRecordGetRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'staff_id'   => [Rule::unique('', 'staff_id')],
-        ];
+        return [];
     }
 }

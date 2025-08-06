@@ -30,14 +30,23 @@ class OverTimeController extends Controller
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
+
     public function create(OverTimeCreateRequest $request)
     {
         DB::beginTransaction();
         try {
             $data = $request->all();
+            $createData = [
+                "staff_id"    => $data['staff_id'],
+                'ot_date'     => $data['ot_date'],
+                'ot_time'     => $data['ot_time'],
+            ];
+            $ot = new OverTimeResource(OverTime::create($createData));
+            DB::commit();
+            return response()->json($ot);
         } catch (\Throwable  $e) {
             DB::rollBack();
-            Utility::log("LeaveController::create", $e->getMessage());
+            Utility::log("OverTimeController::create", $e->getMessage());
             return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
         }
     }
