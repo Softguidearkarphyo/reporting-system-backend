@@ -82,4 +82,8 @@ class Staff extends Model
     {
         return $this->hasMany(OverTime::class, 'staff_id');
     }
+    public function staffFine(): HasMany
+    {
+        return $this->hasMany(StaffFine::class, 'staff_id', 'id');
+    }
 }
