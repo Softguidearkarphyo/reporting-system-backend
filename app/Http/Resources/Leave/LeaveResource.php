@@ -16,9 +16,12 @@ class LeaveResource extends JsonResource
     {
         return [
             'staff_id'   => $this->staff_id,
+            'eng_name'   => $this->staff ? $this->staff->eng_name : 'Unknown',
+            'jp_name'    => $this->staff ? $this->staff->jp_name : 'Unknown',
             'leave_type' => $this->leave_type,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
+            'day_count' => $this->day_count,
             'leave_date' => $this->leave_date,
             'duration' => $this->duration,
             'reason' => $this->reason,

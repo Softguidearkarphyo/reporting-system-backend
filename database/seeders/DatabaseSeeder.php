@@ -37,7 +37,6 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,
             GradeSeeder::class,
             JapaneseLevelSeeder::class,
-            LeaveSeeder::class
         ]);
     }
 }
