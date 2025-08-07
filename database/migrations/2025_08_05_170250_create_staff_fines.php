@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('date');
             $table->time('time')->nullable();
             $table->decimal('amount', 10, 2);
+            $table->integer('count');
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
             $table->softDeletes()->nullable();

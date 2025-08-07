@@ -22,8 +22,8 @@ class StaffFineResource extends JsonResource
             'time'              => $this->time,
             'amount'            => $this->amount,
             'status'            => $this->status,
+            'count'             => $this->count,
             'staff'             => new StaffResource($this->staff),
-
         ];
     }
 }

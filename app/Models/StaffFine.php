@@ -13,6 +13,8 @@ class StaffFine extends Model
         'date',
         'time',
         'amount',
+        'count',
+        'status',
         'created_at',
         'updated_at',
         'deleted_at',

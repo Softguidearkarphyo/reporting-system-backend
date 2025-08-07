@@ -8,6 +8,7 @@ use App\Http\Controllers\Staff\StaffController;
 use App\Http\Controllers\Project\ProjectController;
 use App\Http\Controllers\SystemManagementController;
 use App\Http\Controllers\OverTime\OverTimeController;
+use App\Http\Controllers\Reporting\ReportingController;
 use App\Http\Controllers\SkillSheet\SkillSheetController;
 use App\Http\Controllers\LeaveRecord\LeaveRecordController;
 use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
@@ -51,6 +52,9 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/save', [TaskPerformanceSettingController::class, 'save']);
         Route::post('/discard', [TaskPerformanceSettingController::class, 'discard']);
     });
+    Route::prefix('/reporting')->group(function () {
+        Route::post('/getAllHour', [ReportingController::class, 'getAllHour']);
+    });
     Route::prefix('/leave')->group(function () {
         Route::post('/get', [LeaveController::class, 'get']);
         Route::post('/create', [LeaveController::class, 'create']);
@@ -63,6 +67,7 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/get', [OverTimeController::class, 'get']);
         Route::post('/create', [OverTimeController::class, 'create']);
     });
+
     Route::prefix('/fines')->group(function () {
         Route::post('/create', [StaffController::class, 'createFines']);
         Route::post('/get', [StaffController::class, 'getFines']);

@@ -170,11 +170,20 @@ class StaffController extends Controller
                 $lateFine = 10000;
                 $time = DateTime::createFromFormat('H:i:s', '10:31:00');
             }
+            $inputDate = Carbon::parse($data['date']);
+            $query = StaffFine::query();
+            $getCount = $query->where('staff_id', $data['staff'])
+                ->whereMonth('date', $inputDate->month)
+                ->whereYear('date', $inputDate->year)
+                ->orderBy('created_at', 'desc')
+                ->first(['count']);
+            $totalCount = ($getCount == null) ? 1 : $getCount->count + 1;
             $createData = [
                 'staff_id' => $data['staff'],
                 'date'     => $data['date'],
                 'time'     => $time,
                 'amount'   => $lateFine,
+                'count'    => $totalCount,
                 'status'   => 0,
             ];
             StaffFine::create($createData);
