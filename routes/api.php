@@ -1,16 +1,18 @@
 <?php
 
-use App\Http\Controllers\SystemManagementController;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Leave\LeaveController;
-use App\Http\Controllers\LeaveRecord\LeaveRecordController;
-use App\Http\Controllers\OverTime\OverTimeController;
-use App\Http\Controllers\Project\ProjectController;
-use App\Http\Controllers\Staff\StaffController;
-use App\Http\Controllers\SkillSheet\SkillSheetController;
-use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
-use App\Http\Controllers\Task\TaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Task\TaskController;
+use App\Http\Controllers\Leave\LeaveController;
+use App\Http\Controllers\Staff\StaffController;
+use App\Http\Controllers\Project\ProjectController;
+use App\Http\Controllers\SystemManagementController;
+use App\Http\Controllers\OverTime\OverTimeController;
+use App\Http\Controllers\Reporting\ReportingController;
+use App\Http\Controllers\SkillSheet\SkillSheetController;
+use App\Http\Controllers\LeaveRecord\LeaveRecordController;
+use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
+use App\Http\Controllers\TaskPerformanceSetting\TaskPerformanceSettingController;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -45,6 +47,13 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/task-performance')->group(function () {
         Route::post('/create', [TaskPerformanceController::class, 'create']);
         Route::post('/delete', [TaskPerformanceController::class, 'delete']);
+    });
+    Route::prefix('/task-performance-setting')->group(function () {
+        Route::post('/save', [TaskPerformanceSettingController::class, 'save']);
+        Route::post('/discard', [TaskPerformanceSettingController::class, 'discard']);
+    });
+    Route::prefix('/reporting')->group(function () {
+        Route::post('/getAllHour', [ReportingController::class, 'getAllHour']);
     });
     Route::prefix('/leave')->group(function () {
         Route::post('/get', [LeaveController::class, 'get']);

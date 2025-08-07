@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('task_performance', function (Blueprint $table) {
+        Schema::create('task_performance_settings', function (Blueprint $table) {
             $table->id();
-            $table->date('date');
+            $table->unsignedTinyInteger('day');
             $table->foreignId('staff_id')
                 ->constrained('staffs')
                 ->onDelete('cascade');
@@ -25,7 +25,7 @@ return new class extends Migration
                 ->onDelete('cascade');
             $table->time('period');
 
-            $table->unique(['date', 'staff_id', 'period']);
+            $table->unique(['day', 'staff_id',  'period']);
         });
     }
 
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('task_performance');
+        Schema::dropIfExists('task_performance_settings');
     }
 };

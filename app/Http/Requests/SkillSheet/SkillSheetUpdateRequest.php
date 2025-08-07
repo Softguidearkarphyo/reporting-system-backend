@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\SkillSheet;
 
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SkillSheetUpdateRequest extends FormRequest
@@ -22,7 +23,22 @@ class SkillSheetUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'staff_id'                       => ['required', 'integer', 'exists:staffs,id'],
+            'project'                        => ['required', 'array'],
+            'project.*'                      => ['integer'],
+            'position'                       => ['required', 'integer'],
+            'grade'                          => ['required', 'integer'],
+            'join_date'                      => ['required', 'date'],
+            'sg_experience'                  => ['nullable', 'integer'],
+            'prev_experience'                => ['nullable', 'integer'],
+            'total_experience'               => ['nullable', 'integer'],
+            'japanese_level'                 => ['required', 'integer'],
+            'responsibility'                 => ['required', 'array'],
+            'responsibility.*'               => ['integer'],
+            'major_tech_stack_id'            => ['required', 'integer'],
+            'skills'                         => ['required', 'array'],
+            'skills.proficiency_level_id.*'  => ['nullable', 'integer'],
+            'skills.tech_stack_id.*'         => ['nullable', 'integer'],
         ];
     }
 }

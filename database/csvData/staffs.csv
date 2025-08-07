@@ -1,0 +1,9 @@
+"id","staff_no","eng_name","jp_name","username","password","address","ph_number","position","role","email","permanent_date","ref_person","ref_ph_number","sort_key","created_at","updated_at","deleted_at"
+1,"SGWT0000000000000001","John Doe","駿台","johndoe","$2y$12$dY.LqSJib/MOGZk7ezM/Pede0iVvPKEpUbLMbwOypqn43T9TnZ/ai","Tokyo, Japan","09012345678",1,1,"john@example.com",2023/01/01,"Mr. Smith","08098765432",1,,,
+2,"SGWT0000000000000001","Emily Tanaka","大竹","emily","$2y$12$9HVIbBYdn3jdll78ZonVvuow4Gt4ASG/BpQRi3kJ2B.gMewiuTzXa","Osaka, Japan","08055554444",2,2,"emily@example.com",2024/03/15,"Ms. Yuki","07033332222",2,,,
+3,"SGWT0000000000000001","Taro Suzuki","河井","taro","$2y$12$rDrxeV4sysBw/xQ4txuOtuLmzQ0txiS2C4ZkS.gB7490A/MJLWIca","Nagoya, Japan","07012344321",3,2,"taro@example.com",2022/06/30,"Mr. Ken","09011112222",3,,,
+4,"SGWT0000000000000001","Mai","高津","mai","$2y$12$mMW8L7Gzsn25YFuAuo5Z5epBacLZDThPdvBF9/aLOiVrSbTXsMdBy","Nagoya, Japan","07012344321",3,2,"mai@example.com",2022/06/30,"Mr. Ken","09011112222",3,,,
+5,"SGWT0000000000000001","Mei","新村","mei","$2y$12$ena/3aWGWaadU8lze7Qo7ua4933ISJqu7u43Gh7UEG6.RHqXDktmK","Osaka, Japan","07012344321",3,2,"mei@example.com",2022/06/30,"Mr. Ken","09011112222",3,,,
+6,"SGWT0000000000000001","YuKo","松野","yuko","$2y$12$rk2bj9b2rWTlJxhWXzq7GePHSz/H5CVF/.7J80xgrRjFWhVaNXAKe","Nagoya, Japan","07012344321",3,2,"yuko@example.com",2022/06/30,"Mr. Ken","09011112222",3,,,
+7,"SGWT0000000000000001","YuKi","稲村周","yuki","$2y$12$NUc6t7LhYst3TyurzkIFnO.OVY4DXaBpQGEHIZneZKk5j8JeLWOLi","Tokyo, Japan","07012344321",3,2,"yuki@example.com",2022/06/30,"Mr. Ken","09011112222",3,,,
+8,"SGWT0000000000000001","YuJi","大浦","yuji","$2y$12$MgbPMHNHb8q7U6XiYccpj.uPPlF.HjEKaZZpDZ9hPXVGkYzrfyIPW","Nagoya, Japan","07012344321",3,2,"yuji@example.com",2022/06/30,"Mr. Ken","09011112222",3,,,

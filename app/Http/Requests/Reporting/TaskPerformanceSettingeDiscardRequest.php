@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Leave;
+namespace App\Http\Requests\Reporting;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class LeaveCreateRequest extends FormRequest
+class TaskPerformanceSettingeDiscardRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,13 +22,8 @@ class LeaveCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'staff_id' => 'required|exists:staffs,id',
-            'leave_type' => 'required|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'leave_date' => 'nullable|date',
-            'duration' => 'nullable|string',
-            'reason' => 'nullable|string'
+            "delete_array"                  => ["required", "array"],
+            "delete_array.*"                => ["required", "integer", "exists:staffs,id"],
         ];
     }
 }

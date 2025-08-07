@@ -15,10 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('staff_id')->constrained('staffs')->onDelete('cascade');
             $table->string('leave_type');
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
             $table->date('leave_date')->nullable();
             $table->string('duration')->nullable();
+            $table->integer('day_count')->default(1);;
             $table->text('reason')->nullable();
             $table->timestamps();
             $table->softDeletes();

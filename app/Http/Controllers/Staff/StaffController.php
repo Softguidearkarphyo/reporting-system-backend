@@ -21,6 +21,7 @@ use App\Http\Requests\Staff\StaffDeleteRequest;
 use App\Http\Requests\Staff\StaffUpdateRequest;
 use App\Http\Resources\Staff\StaffFineResource;
 use App\Http\Requests\Staff\StaffFineDeleteRequest;
+use App\Models\SkillSheet;
 
 class StaffController extends Controller
 {
@@ -160,6 +161,7 @@ class StaffController extends Controller
         try {
             $data   = $request->all();
             Staff::where('id', $data['id'])->update(['deleted_at' => now()]);
+            SkillSheet::where('staff_id', $data['id'])->delete();
             DB::commit();
             return response()->json($data['id']);
         } catch (\Throwable  $e) {
@@ -195,11 +197,20 @@ class StaffController extends Controller
                 $lateFine = 10000;
                 $time = DateTime::createFromFormat('H:i:s', '10:31:00');
             }
+            $inputDate = Carbon::parse($data['date']);
+            $query = StaffFine::query();
+            $getCount = $query->where('staff_id', $data['staff'])
+                ->whereMonth('date', $inputDate->month)
+                ->whereYear('date', $inputDate->year)
+                ->orderBy('created_at', 'desc')
+                ->first(['count']);
+            $totalCount = ($getCount == null) ? 1 : $getCount->count + 1;
             $createData = [
                 'staff_id' => $data['staff'],
                 'date'     => $data['date'],
                 'time'     => $time,
                 'amount'   => $lateFine,
+                'count'    => $totalCount,
                 'status'   => 0,
             ];
             StaffFine::create($createData);
