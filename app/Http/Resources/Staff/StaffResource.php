@@ -37,6 +37,7 @@ class StaffResource extends JsonResource
                 isset($data['task_performance']),
                 TaskPerformanceResource::collection($this->taskPerformance),
             ),
+            'staff_image_url'   => $this->staff_image_url,
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
             'deleted_at'        => $this->deleted_at,

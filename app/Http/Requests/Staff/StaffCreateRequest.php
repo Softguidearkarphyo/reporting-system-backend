@@ -40,6 +40,7 @@ class StaffCreateRequest extends FormRequest
             'project'         => ['nullable', 'array'],
             'project.*'       => ['integer'],
             'sort_key'        => ['nullable', 'integer'],
+            'staff_image'     => ['nullable', 'file'],
         ];
     }
 }

@@ -26,6 +26,7 @@ return new class extends Migration
             $table->date('permanent_date')->nullable();
             $table->string('ref_person', 40)->nullable();
             $table->string('ref_ph_number', 100)->nullable();
+            $table->string('staff_image', 100)->nullable();
             $table->unsignedTinyInteger('sort_key')->nullable();
             $table->timestamps();
             $table->softDeletes()->nullable();

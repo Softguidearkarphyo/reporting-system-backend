@@ -32,7 +32,12 @@ class StaffController extends Controller
             if (!empty($data['id'])) {
                 $query->where('id', $data['id']);
             }
-            $staffs = $query->get();
+            $staffs = $query->get()->map(function ($staff) {
+                $staff->staff_image_url = $staff->staff_image
+                    ? asset('images/staffs/' . $staff->staff_image)
+                    : null;
+                return $staff;
+            });
             $staffs = StaffResource::collection($staffs);
             return response()->json($staffs);
         } catch (\Throwable  $e) {
@@ -46,6 +51,11 @@ class StaffController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->all();
+            if ($request->hasFile('staff_image')) {
+                $file = $request->file('staff_image');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('images/staffs'), $fileName);
+            }
             $createData = [
                 "staff_no"          => $data['staff_no'],
                 "eng_name"          => $data['eng_name'],
@@ -61,6 +71,7 @@ class StaffController extends Controller
                 "ref_person"        => $data['ref_person'] ?? null,
                 "ref_ph_number"     => $data['ref_ph_number'] ?? null,
                 "sort_key"          => $data['sort_key'] ?? null,
+                "staff_image"       => $fileName ?? null,
             ];
             $staff = new StaffResource(Staff::create($createData));
             if (!empty($data['project']) && is_array($data['project'])) {
@@ -87,6 +98,19 @@ class StaffController extends Controller
         DB::beginTransaction();
         try {
             $data   = $request->all();
+            // if ($request->hasFile('staff_image')) {
+            //     // Delete old image if exists
+            //     if ($staff->staff_image && file_exists(public_path('images/staffs/' . $staff->staff_image))) {
+            //         unlink(public_path('images/staffs/' . $staff->staff_image));
+            //     }
+
+            //     $file = $request->file('staff_image');
+            //     $fileName = time() . '_' . $file->getClientOriginalName();
+            //     $file->move(public_path('images/staffs'), $fileName);
+
+            //     // Save new image name
+            //     $data['staff_image'] = $fileName;
+            // }
             $updateData = [
                 "staff_no"          => $data['staff_no'],
                 "eng_name"          => $data['eng_name'],
@@ -101,6 +125,7 @@ class StaffController extends Controller
                 "ref_person"        => $data['ref_person'] ?? null,
                 "ref_ph_number"     => $data['ref_ph_number'] ?? null,
                 "sort_key"          => $data['sort_key'] ?? null,
+                "staff_image"       => $data['staff_image'] ?? null,
             ];
             if (!empty($data['password'])) {
                 $updateData['password'] = Hash::make($data['password']);

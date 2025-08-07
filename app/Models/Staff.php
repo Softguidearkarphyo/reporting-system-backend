@@ -38,6 +38,7 @@ class Staff extends Model
         'ref_ph_number',
         'project',
         'sort_key',
+        'staff_image',
         'created_at',
         'updated_at',
         'deleted_at',
