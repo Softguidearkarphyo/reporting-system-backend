@@ -19,21 +19,13 @@ class TaskPerformanceSettingController extends Controller
             $data = $request->all();
             if ($data['create_array']) {
                 $insertData = $data['create_array'];
-                $keys = collect($insertData)
-                    ->map(fn($item) => ['day' => $item['day'], 'staff_id' => $item['staff_id']])
-                    ->unique()
-                    ->values();
-                foreach ($keys as $key) {
-                    TaskPerformanceSetting::where('day', $key['day'])
-                        ->where('staff_id', $key['staff_id'])->delete();
-                };
-                TaskPerformanceSetting::insert($insertData);
+                TaskPerformanceSetting::upsert($insertData, ['day', 'staff_id', 'period'], ['project_id', 'task_id']);
                 DB::commit();
             }
             return response()->json([]);
         } catch (\Throwable  $e) {
             DB::rollBack();
-            Utility::log("TaskPerformanceSettingController::create", $e->getMessage());
+            Utility::log("TaskPerformanceSettingController::save", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
@@ -51,7 +43,7 @@ class TaskPerformanceSettingController extends Controller
             return response()->json([]);
         } catch (\Throwable  $e) {
             DB::rollBack();
-            Utility::log("TaskPerformanceSettingController::delete", $e->getMessage());
+            Utility::log("TaskPerformanceSettingController::discard", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }

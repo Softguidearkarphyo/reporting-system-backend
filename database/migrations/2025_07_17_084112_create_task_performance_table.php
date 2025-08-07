@@ -24,6 +24,8 @@ return new class extends Migration
                 ->constrained('tasks')
                 ->onDelete('cascade');
             $table->time('period');
+
+            $table->unique(['date', 'staff_id', 'period']);
         });
     }
 
