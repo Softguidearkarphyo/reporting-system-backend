@@ -84,9 +84,9 @@ class SkillSheetController extends Controller
                 "position_id"          => $data['position'],
                 "grade_id"             => $data['grade'],
                 "join_date"            => $data['join_date'],
-                "sg_experience"        => $data['sg_experience'],
-                "prev_experience"      => $data['prev_experience'],
-                "total_experience"     => $data['total_experience'],
+                "sg_experience"        => $data['sg_experience'] ?? 0,
+                "prev_experience"      => $data['prev_experience'] ?? 0,
+                "total_experience"     => $data['total_experience'] ?? 0,
                 "japanese_level_id"    => $data['japanese_level'],
                 "major_tech_stack_id"  => $data['major_tech_stack_id'],
             ];

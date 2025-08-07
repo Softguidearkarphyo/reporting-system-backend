@@ -21,6 +21,7 @@ use App\Http\Requests\Staff\StaffDeleteRequest;
 use App\Http\Requests\Staff\StaffUpdateRequest;
 use App\Http\Resources\Staff\StaffFineResource;
 use App\Http\Requests\Staff\StaffFineDeleteRequest;
+use App\Models\SkillSheet;
 
 class StaffController extends Controller
 {
@@ -135,6 +136,7 @@ class StaffController extends Controller
         try {
             $data   = $request->all();
             Staff::where('id', $data['id'])->update(['deleted_at' => now()]);
+            SkillSheet::where('staff_id', $data['id'])->delete();
             DB::commit();
             return response()->json($data['id']);
         } catch (\Throwable  $e) {

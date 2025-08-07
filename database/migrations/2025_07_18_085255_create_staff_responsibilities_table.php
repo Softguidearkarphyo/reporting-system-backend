@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes()->nullable();
 
-            $table->unique(['staff_id', 'responsibility_id']);
+            $table->unique(['staff_id', 'responsibility_id'], 'staff_responsibility_uk');
         });
     }
 
