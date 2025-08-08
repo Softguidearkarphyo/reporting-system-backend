@@ -37,7 +37,11 @@ class TaskPerformanceSettingController extends Controller
             $data = $request->all();
             if ($data['delete_array']) {
                 $deleteData = $data['delete_array'];
-                TaskPerformanceSetting::whereIn('staff_id', $deleteData)->delete();
+                foreach ($deleteData as $deleteDatum) {
+                    TaskPerformanceSetting::where('day', $deleteDatum['day'])
+                        ->where('staff_id', $deleteDatum['staff_id'])
+                        ->where('period', $deleteDatum['period'])->delete();
+                };
                 DB::commit();
             }
             return response()->json([]);

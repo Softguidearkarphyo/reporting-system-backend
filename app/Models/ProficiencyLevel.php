@@ -9,7 +9,6 @@ class ProficiencyLevel extends Model
     protected $table = 'proficiency_levels';
 
     protected $fillable = [
-        'cd',
         'name',
         'abbv',
         'created_at',

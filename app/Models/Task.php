@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\TaskPerformance;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\TaskPerformanceSetting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,6 +32,15 @@ class Task extends Model
     {
         return $this->hasMany(
             TaskPerformance::class,
+            'task_id',
+            'id'
+        );
+    }
+
+    public function taskPerformanceSetting(): HasMany
+    {
+        return $this->hasMany(
+            TaskPerformanceSetting::class,
             'task_id',
             'id'
         );

@@ -45,6 +45,7 @@ class SkillSheetResource extends JsonResource
                     'symbol' => $item->proficiencyLevel->abbv,
                 ];
             }),
+            'updated_at'  => $this->updated_at,
         ];
     }
 }
