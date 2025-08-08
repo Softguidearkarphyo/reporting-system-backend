@@ -21,9 +21,6 @@ class TaskGetRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            "start_date"        => ["required"],
-            "end_date"          => ["required"],
-        ];
+        return [];
     }
 }
