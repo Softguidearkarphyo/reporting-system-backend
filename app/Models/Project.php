@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\StaffProject;
 use App\Models\TaskPerformance;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\TaskPerformanceSetting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,6 +42,15 @@ class Project extends Model
     {
         return $this->hasMany(
             TaskPerformance::class,
+            'project_id',
+            'id'
+        );
+    }
+
+    public function taskPerformanceSetting(): HasMany
+    {
+        return $this->hasMany(
+            TaskPerformanceSetting::class,
             'project_id',
             'id'
         );

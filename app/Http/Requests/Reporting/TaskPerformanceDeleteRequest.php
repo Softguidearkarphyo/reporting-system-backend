@@ -26,6 +26,7 @@ class TaskPerformanceDeleteRequest extends FormRequest
             "delete_array"                  => ["required", "array"],
             "delete_array.*.date"           => ["required", "date", "date_format:Y-m-d"],
             "delete_array.*.staff_id"       => ["required", "integer", "exists:staffs,id"],
+            "delete_array.*.period"         => ["required", "date_format:H:i:s"]
         ];
     }
 }

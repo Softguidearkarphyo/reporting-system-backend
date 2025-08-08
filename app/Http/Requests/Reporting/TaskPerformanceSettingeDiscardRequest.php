@@ -23,7 +23,9 @@ class TaskPerformanceSettingeDiscardRequest extends FormRequest
     {
         return [
             "delete_array"                  => ["required", "array"],
-            "delete_array.*"                => ["required", "integer", "exists:staffs,id"],
+            "delete_array.*.day"            => ["required", "integer", "between:0,6"],
+            "delete_array.*.staff_id"       => ["required", "integer", "exists:staffs,id"],
+            "delete_array.*.period"         => ["required", "date_format:H:i:s"]
         ];
     }
 }
