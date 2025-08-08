@@ -175,30 +175,21 @@ class StaffController extends Controller
     {
         DB::beginTransaction();
         try {
-            $data = $request->all();
-            // $time = DateTime::createFromFormat('H:i:s', $data['time']);
-            // $eightAM = DateTime::createFromFormat('H:i:s', '08:30:00');
-            // $nineAM = DateTime::createFromFormat('H:i:s', '09:00:00');
-            // $tenAm = DateTime::createFromFormat('H:i:s', '10:00:00');
-            // if ($time >  $eightAM && $time <= $nineAM) {
-            //     $lateFine = 2000;
-            // } else if ($time > $nineAM && $data['time'] <= $tenAm) {
-            //     $lateFine = 5000;
-            // } else if ($time > $tenAm) {
-            //     $lateFine = 10000;
-            // }
-            if ($data['time'] == 1) {
+            $data       = $request->all();
+            $time       = DateTime::createFromFormat('H:i:s', $data['time']);
+            $eightAM    = DateTime::createFromFormat('H:i:s', '08:30:00');
+            $nineAM     = DateTime::createFromFormat('H:i:s', '09:00:00');
+            $tenAm      = DateTime::createFromFormat('H:i:s', '10:00:00');
+            $inputDate  = Carbon::parse($data['date']);
+            $query      = StaffFine::query();
+
+            if ($time >  $eightAM && $time <= $nineAM) {
                 $lateFine = 2000;
-                $time = DateTime::createFromFormat('H:i:s', '08:31:00');
-            } elseif ($data['time'] == 2) {
+            } else if ($time > $nineAM && $time <= $tenAm) {
                 $lateFine = 5000;
-                $time = DateTime::createFromFormat('H:i:s', '09:01:00');
-            } else {
+            } else if ($time > $tenAm) {
                 $lateFine = 10000;
-                $time = DateTime::createFromFormat('H:i:s', '10:31:00');
             }
-            $inputDate = Carbon::parse($data['date']);
-            $query = StaffFine::query();
             $getCount = $query->where('staff_id', $data['staff'])
                 ->whereMonth('date', $inputDate->month)
                 ->whereYear('date', $inputDate->year)
@@ -227,7 +218,9 @@ class StaffController extends Controller
         try {
             $query = StaffFine::query();
 
-            $staffFines = $query->whereHas('staff')->get();
+            $staffFines = $query->whereHas('staff')
+                ->orderBy('date')
+                ->get();
             $staffFines = StaffFineResource::collection($staffFines);
             return response()->json(["data" => $staffFines]);
         } catch (\Throwable  $e) {

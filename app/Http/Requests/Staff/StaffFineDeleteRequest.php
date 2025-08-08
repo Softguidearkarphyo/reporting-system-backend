@@ -22,7 +22,7 @@ class StaffFineDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "id" => ["required", "integer", "exists:staffs,id"],
+            "id" => ["required", "integer"],
         ];
     }
 }
