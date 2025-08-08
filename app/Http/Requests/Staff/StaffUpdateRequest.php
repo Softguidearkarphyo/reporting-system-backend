@@ -36,8 +36,8 @@ class StaffUpdateRequest extends FormRequest
             'permanent_date'  => ['nullable', 'date'],
             'ref_person'      => ['nullable', 'string', 'max:40'],
             'ref_ph_number'   => ['nullable', 'string', 'max:100'],
-            'project'         => ['nullable', 'array'],
-            'project.*'       => ['integer'],
+            // 'project'         => ['nullable', 'array'],
+            // 'project.*'       => ['integer'],
             'sort_key'        => ['nullable', 'integer', 'between:0,255'],
         ];
     }
