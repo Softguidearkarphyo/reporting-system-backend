@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Reporting\TaskPerformanceResource;
 use App\Http\Resources\Reporting\TaskPerformanceSettingResource;
+use Carbon\Carbon;
 
 class StaffResource extends JsonResource
 {
@@ -17,6 +18,13 @@ class StaffResource extends JsonResource
     public function toArray(Request $request): array
     {
         $data = $request->all();
+        $leave = $this->leaves->filter(function ($item) {
+            return Carbon::parse($item->leave_date)->format('Y-m') === Carbon::now()->format('Y-m');
+        })->values()->all();
+
+        $over_time = $this->over_times->filter(function ($item) {
+            return Carbon::parse($item->ot_date)->format('Y-m') === Carbon::now()->format('Y-m');
+        })->values()->all();
         return  [
             'id'                => $this->id,
             'staff_no'          => $this->staff_no,
@@ -30,6 +38,8 @@ class StaffResource extends JsonResource
             'position'          => $this->position,
             'role'              => $this->role,
             'email'             => $this->email,
+            'leave'             => $leave,
+            'over_times'        => $over_time,
             'permanent_date'    => $this->permanent_date,
             'ref_person'        => $this->ref_person,
             'ref_ph_number'     => $this->ref_ph_number,
