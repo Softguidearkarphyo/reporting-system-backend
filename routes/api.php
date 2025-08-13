@@ -7,6 +7,7 @@ use App\Http\Controllers\Leave\LeaveController;
 use App\Http\Controllers\Staff\StaffController;
 use App\Http\Controllers\Project\ProjectController;
 use App\Http\Controllers\SystemManagementController;
+use App\Http\Controllers\MenPower\MenPowerController;
 use App\Http\Controllers\OverTime\OverTimeController;
 use App\Http\Controllers\Reporting\ReportingController;
 use App\Http\Controllers\SkillSheet\SkillSheetController;
@@ -67,12 +68,14 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/get', [OverTimeController::class, 'get']);
         Route::post('/create', [OverTimeController::class, 'create']);
     });
-
     Route::prefix('/fines')->group(function () {
         Route::post('/create', [StaffController::class, 'createFines']);
         Route::post('/get', [StaffController::class, 'getFines']);
         Route::post('/delete', [StaffController::class, 'deleteFines']);
         Route::post('/status-change', [StaffController::class, 'statusChange']);
+    });
+    Route::prefix('/men-power')->group(function () {
+        Route::post('/get', [MenPowerController::class, 'get']);
     });
 });
 
