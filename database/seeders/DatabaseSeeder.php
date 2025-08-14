@@ -8,6 +8,7 @@ use Database\Seeders\CsvDataSeeder;
 use Database\Seeders\Task\TaskSeeder;
 use Database\Seeders\Grade\GradeSeeder;
 use Database\Seeders\Project\ProjectSeeder;
+use Database\Seeders\Location\LocationSeeder;
 use Database\Seeders\Position\PositionSeeder;
 use Database\Seeders\TechStack\TechStackSeeder;
 use Database\Seeders\JapaneseLevel\JapaneseLevelSeeder;
@@ -32,7 +33,8 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,
             GradeSeeder::class,
             JapaneseLevelSeeder::class,
-            CsvDataSeeder::class
+            CsvDataSeeder::class,
+            LocationSeeder::class,
         ]);
     }
 }

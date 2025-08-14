@@ -33,12 +33,7 @@ class StaffController extends Controller
             if (!empty($data['id'])) {
                 $query->where('id', $data['id']);
             }
-            $staffs = $query->get()->map(function ($staff) {
-                $staff->staff_image_url = $staff->staff_image
-                    ? asset('images/staffs/' . $staff->staff_image)
-                    : null;
-                return $staff;
-            });
+            $staffs = $query->get();
             $staffs = StaffResource::collection($staffs);
             return response()->json($staffs);
         } catch (\Throwable  $e) {

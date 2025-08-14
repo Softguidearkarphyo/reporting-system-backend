@@ -96,4 +96,8 @@ class Staff extends Model
     {
         return $this->hasMany(StaffFine::class, 'staff_id', 'id');
     }
+    public function location(): HasOne
+    {
+        return $this->hasOne(Location::class, 'staff_id', 'id');
+    }
 }

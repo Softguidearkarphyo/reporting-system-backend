@@ -7,6 +7,8 @@ use App\Models\Staff;
 use App\ReturnMessage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Staff\StaffResource;
+use App\Models\Location;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -18,24 +20,27 @@ class AuthController extends Controller
             $credentials = $request->validate([
                 'username' => 'required|string',
                 'password' => 'required|string',
+                'lat'      => 'nullable|numeric',
+                'lng'      => 'nullable|numeric',
             ]);
             $staff = Staff::where('username', $credentials['username'])->first();
-            
+
             if (!$staff) {
                 return response()->json([
                     'message' => "Username does not match!",
-                ],422);
+                ], 422);
             }
             if (!Hash::check($credentials['password'], $staff->password)) {
                 return response()->json([
                     'message' => 'Password is incorrect',
-                ],401);  
+                ], 401);
             }
+            $this->saveLocation($staff->id, $credentials['lat'], $credentials['lng']);
             $token = $staff->createToken('staff-token')->plainTextToken;
             return response()->json([
                 'message' => 'Logged in',
                 'token' => $token,
-                'staff' => $staff,
+                'staff' => new StaffResource($staff),
             ]);
         } catch (\Throwable  $e) {
             Utility::log("AuthController::login", $e->getMessage());
@@ -58,10 +63,34 @@ class AuthController extends Controller
     {
         try {
             $user = auth('sanctum')->user();
+            if ($user) {
+                $user = new StaffResource($user);
+            }
             return response()->json($user);
         } catch (\Throwable  $e) {
             Utility::log("AuthController::user", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function saveLocation($id, $lat, $lng)
+    {
+        try {
+            Location::upsert(
+                [
+                    [
+                        'staff_id' => $id,
+                        'lat' => $lat,
+                        'lng' => $lng,
+                        'updated_at' => now(),
+                        'created_at' => now(),
+                    ]
+                ],
+                ['staff_id'],
+                ['lat', 'lng', 'updated_at']
+            );
+        } catch (\Throwable  $e) {
+            Utility::log("AuthController::saveLocation", $e->getMessage());
         }
     }
 }
