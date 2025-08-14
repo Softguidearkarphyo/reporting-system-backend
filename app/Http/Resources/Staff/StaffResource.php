@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources\Staff;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Location\LocationResource;
 use App\Http\Resources\Reporting\TaskPerformanceResource;
 use App\Http\Resources\Reporting\TaskPerformanceSettingResource;
-use Carbon\Carbon;
 
 class StaffResource extends JsonResource
 {
@@ -28,7 +29,10 @@ class StaffResource extends JsonResource
         return  [
             'id'                => $this->id,
             'staff_no'          => $this->staff_no,
-            'staff_project'     => $this->staffProjects,
+            'staff_project'     => $this->when(
+                isset($data['staff_project']),
+                $this->staffProjects,
+            ),
             'skill_sheet'       => $this->when(isset($data['skill_sheet']), $this->skillSheet),
             'eng_name'          => $this->eng_name,
             'jp_name'           => $this->jp_name,
@@ -48,10 +52,14 @@ class StaffResource extends JsonResource
                 isset($data['task_performance']),
                 TaskPerformanceResource::collection($this->taskPerformance),
             ),
-            'staff_image_url'   => $this->staff_image_url,
+            'staff_image_url'   => isset($this->staff_image) ? asset('images/staffs/' . $this->staff_image) : null,
             'task_performance_setting'  => $this->when(
                 isset($data['task_performance_setting']),
                 TaskPerformanceSettingResource::collection($this->taskPerformanceSetting),
+            ),
+            'location'          => $this->when(
+                isset($data['location']),
+                new LocationResource($this->location),
             ),
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
