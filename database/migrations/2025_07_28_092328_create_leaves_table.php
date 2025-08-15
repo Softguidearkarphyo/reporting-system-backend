@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('leaves', function (Blueprint $table) {
             $table->id();
             $table->foreignId('staff_id')->constrained('staffs')->onDelete('cascade');
-            $table->string('leave_type');
             $table->date('leave_date')->nullable();
             $table->string('duration')->nullable();
             $table->integer('day_count')->default(1);;
             $table->text('reason')->nullable();
+            $table->boolean('leave_type')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });

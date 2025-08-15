@@ -26,7 +26,8 @@ class LeaveRecordCreateRequest extends FormRequest
             'staff_id'        => ['required', Rule::unique('leave_record', 'staff_id')],
             'permanent_date'  => ['required', 'date'],
             'remain_leaves'   => ['nullable'],
-            'total_leaves'    => ['nullable'],
+            'total_given'     => ['nullable'],
+            'total_used'      => ['nullable'],
         ];
     }
 }

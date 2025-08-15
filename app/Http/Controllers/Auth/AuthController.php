@@ -35,7 +35,9 @@ class AuthController extends Controller
                     'message' => 'Password is incorrect',
                 ], 401);
             }
-            $this->saveLocation($staff->id, $credentials['lat'], $credentials['lng']);
+            if (isset($credentials['lat']) && isset($credentials['lng'])) {
+                $this->saveLocation($staff->id, $credentials['lat'], $credentials['lng']);
+            }
             $token = $staff->createToken('staff-token')->plainTextToken;
             return response()->json([
                 'message' => 'Logged in',
