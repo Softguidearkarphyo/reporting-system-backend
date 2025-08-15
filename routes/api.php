@@ -56,6 +56,9 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/reporting')->group(function () {
         Route::post('/getAllHour', [ReportingController::class, 'getAllHour']);
     });
+    Route::prefix('/project-hour')->group(function () {
+        Route::post('/get', [ProjectController::class, 'getProjectHour']);
+    });
     Route::prefix('/leave')->group(function () {
         Route::post('/get', [LeaveController::class, 'get']);
         Route::post('/create', [LeaveController::class, 'create']);
