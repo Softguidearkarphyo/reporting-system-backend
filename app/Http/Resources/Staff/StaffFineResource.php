@@ -15,7 +15,6 @@ class StaffFineResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-
             'id'                => $this->id,
             'staff_id'          => $this->staff_id,
             'date'              => $this->date,

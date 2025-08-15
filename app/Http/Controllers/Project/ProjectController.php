@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Project;
 
 use App\Utility;
+use Carbon\Carbon;
 use App\ReturnMessage;
 use App\Models\Project;
+use Illuminate\Http\Request;
+use App\Models\TaskPerformance;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Project\ProjectResource;
@@ -12,6 +15,7 @@ use App\Http\Requests\Project\ProjectGetRequest;
 use App\Http\Requests\Project\ProjectCreateRequest;
 use App\Http\Requests\Project\ProjectDeleteRequest;
 use App\Http\Requests\Project\ProjectUpdateRequest;
+use App\Http\Resources\Reporting\ProjectWorkHourResource;
 
 class ProjectController extends Controller
 {
@@ -85,6 +89,24 @@ class ProjectController extends Controller
         } catch (\Throwable  $e) {
             DB::rollBack();
             Utility::log("ProjectController::delete", $e->getMessage());
+            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function getProjectHour(Request $request)
+    {
+        try {
+            $data = $request->all();
+            $end_date = Carbon::parse($data['end_date']);
+            $week_count = (int)$data['week_date'];
+            $startDate = $end_date->copy()->subWeeks($week_count);
+            $query = TaskPerformance::whereHas('staff')
+                ->whereHas('project');
+            $result = $query->whereBetween('date', [$startDate, $end_date])->get();
+            $projects_hour = ProjectWorkHourResource::collection($result);
+            return response()->json($projects_hour);
+        } catch (\Throwable  $e) {
+            Utility::log("ProjectController::get", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
