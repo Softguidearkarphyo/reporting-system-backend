@@ -21,7 +21,7 @@ class AuthController extends Controller
                 'username' => 'required|string',
                 'password' => 'required|string',
                 'lat'      => 'nullable|numeric',
-                'lng'      => 'nullable|numeric',
+                'lon'      => 'nullable|numeric',
             ]);
             $staff = Staff::where('username', $credentials['username'])->first();
 
@@ -35,8 +35,8 @@ class AuthController extends Controller
                     'message' => 'Password is incorrect',
                 ], 401);
             }
-            if (isset($credentials['lat']) && isset($credentials['lng'])) {
-                $this->saveLocation($staff->id, $credentials['lat'], $credentials['lng']);
+            if (isset($credentials['lat']) && isset($credentials['lon'])) {
+                $this->saveLocation($staff->id, $credentials['lat'], $credentials['lon']);
             }
             $token = $staff->createToken('staff-token')->plainTextToken;
             return response()->json([
