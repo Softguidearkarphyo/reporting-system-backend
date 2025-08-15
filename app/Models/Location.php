@@ -22,7 +22,7 @@ class Location extends Model
         'id',
         'staff_id',
         'lat',
-        'lng',
+        'lon',
         'created_at',
         'updated_at',
         'deleted_at',

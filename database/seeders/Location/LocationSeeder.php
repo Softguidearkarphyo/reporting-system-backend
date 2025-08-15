@@ -13,13 +13,13 @@ class LocationSeeder extends Seeder
     public function run(): void
     {
         $lat = 16.8558592;
-        $lng = 96.1576960;
+        $lon = 96.1576960;
 
         for ($i = 1; $i <= 20; $i++) {
             Location::insert([
                 'staff_id' => $i,
                 'lat'      => $lat,
-                'lng'      => $lng,
+                'lon'      => $lon,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

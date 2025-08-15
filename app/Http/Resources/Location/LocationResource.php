@@ -20,7 +20,7 @@ class LocationResource extends JsonResource
             'id'            => $this->id,
             'staff_id'      => $this->staff_id,
             'lat'           => $this->lat,
-            'lng'           => $this->lng,
+            'lon'           => $this->lon,
             'staff'         => $this->when(
                 isset($data['staff']),
                 new StaffResource($this->staff),
