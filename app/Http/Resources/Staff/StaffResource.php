@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Location\LocationResource;
+use App\Http\Resources\SkillSheet\SkillSheetResource;
 use App\Http\Resources\Reporting\TaskPerformanceResource;
 use App\Http\Resources\Reporting\TaskPerformanceSettingResource;
 
@@ -19,13 +20,17 @@ class StaffResource extends JsonResource
     public function toArray(Request $request): array
     {
         $data = $request->all();
-        $leave = $this->leaves->filter(function ($item) {
-            return Carbon::parse($item->leave_date)->format('Y-m') === Carbon::now()->format('Y-m');
-        })->values()->all();
+        $leave = $this->when(isset($data['leave']), function () {
+            return $this->leaves->filter(function ($item) {
+                return Carbon::parse($item->leave_date)->format('Y-m') === Carbon::now()->format('Y-m');
+            })->values()->all();
+        });
+        $over_time = $this->when(isset($data['over_time']), function () {
+            return $this->over_times->filter(function ($item) {
+                return Carbon::parse($item->ot_date)->format('Y-m') === Carbon::now()->format('Y-m');
+            })->values()->all();
+        });
 
-        $over_time = $this->over_times->filter(function ($item) {
-            return Carbon::parse($item->ot_date)->format('Y-m') === Carbon::now()->format('Y-m');
-        })->values()->all();
         return  [
             'id'                => $this->id,
             'staff_no'          => $this->staff_no,
@@ -33,7 +38,10 @@ class StaffResource extends JsonResource
                 isset($data['staff_project']),
                 $this->staffProjects,
             ),
-            'skill_sheet'       => $this->when(isset($data['skill_sheet']), $this->skillSheet),
+            'skill_sheet' => $this->when(
+                isset($data['skill_sheet']),
+                new SkillSheetResource($this->skillSheet),
+            ),
             'eng_name'          => $this->eng_name,
             'jp_name'           => $this->jp_name,
             'username'          => $this->username,
@@ -43,6 +51,7 @@ class StaffResource extends JsonResource
             'role'              => $this->role,
             'email'             => $this->email,
             'leave'             => $leave,
+            'fine'              => $this->when(isset($data['fine']), $this->staffFine),
             'over_times'        => $over_time,
             'permanent_date'    => $this->permanent_date,
             'ref_person'        => $this->ref_person,
