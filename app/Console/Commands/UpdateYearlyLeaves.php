@@ -38,9 +38,7 @@ class UpdateYearlyLeaves extends Command
             })
             ->get()
             ->each(function ($leave) {
-                $leave->remain_leaves += 10;
-                $leave->total_leaves += 10;
-                $leave->save();
+                $leave->carry_leaves += 10;
             });
 
         $this->info('Leave updated!');

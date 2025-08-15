@@ -15,15 +15,18 @@ class LeaveRecordResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'staff_id'  => $this->staff_id,
-            'eng_name' => $this->staff ? $this->staff->eng_name : 'Unknown',
-            'jp_name' => $this->staff ? $this->staff->jp_name : 'Unknown',
+            'staff_id'       => $this->staff_id,
+            'eng_name'       => $this->staff ? $this->staff->eng_name : 'Unknown',
+            'jp_name'        => $this->staff ? $this->staff->jp_name : 'Unknown',
             'permanent_date' => $this->permanent_date,
-            'remain_leaves' => $this->remain_leaves,
-            'total_leaves' => $this->total_leaves,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-            'deleted_at' => $this->deleted_at,
+            'remain_leaves'  => $this->remain_leaves,
+            'first_annual'   => $this->first_annual,
+            'second_annual'  => $this->second_annual,
+            'total_leaves'   => $this->total_leaves,
+            'total_used'     => $this->total_used,
+            'created_at'     => $this->created_at,
+            'updated_at'     => $this->updated_at,
+            'deleted_at'     => $this->deleted_at,
         ];
     }
 }

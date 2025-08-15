@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\ReturnMessage;
 use App\Utility;
+use DateTime;
 
 class LeaveRecordController extends Controller
 {
@@ -37,11 +38,37 @@ class LeaveRecordController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->all();
+            if (isset($data['permanent_date'])) {
+                $permanent_date = new DateTime($data['permanent_date']);
+                $currentYear = (int)$permanent_date->format('Y');
+                $firstPeriodStart = new DateTime("$currentYear-01-01");
+                $yearEnd = new DateTime("$currentYear-12-31");
+                $firstPeriodEnd = (clone $firstPeriodStart)->modify('+6 months');
+                $totalDays = (int)$yearEnd->diff($firstPeriodStart)->format('%a') + 1;
+                $remainingDays = (int)$yearEnd->diff($permanent_date)->format('%a') + 1;
+                $totalLeave = 10;
+                $leave = round(($remainingDays / $totalDays) * $totalLeave * 2) / 2;
+                $firstHalfLeave = 0;
+                if ($permanent_date <= $firstPeriodEnd) {
+                    $totalFirstHalfDays = (int)$firstPeriodEnd->diff($firstPeriodStart)->format('%a') + 1;
+                    $remainingFirstHalfDays = (int)$firstPeriodEnd->diff($permanent_date)->format('%a') + 1;
+                    $firstHalfLeave = round(($remainingFirstHalfDays / $totalFirstHalfDays) * ($totalLeave / 2) * 2) / 2;
+                }
+                $secondHalfLeave = 0;
+                if ($permanent_date > $firstPeriodEnd) {
+                    $remainingSecondHalfDays = (int)$yearEnd->diff($permanent_date)->format('%a') + 1;
+                    $secondHalfLeave = round(($remainingSecondHalfDays / ($totalDays / 2)) * ($totalLeave / 2) * 2) / 2;
+                } else {
+                    $secondHalfLeave = $totalLeave / 2;
+                }
+            }
             $createData = [
-                'staff_id'         => $data['staff_id'],
-                'permanent_date'   => $data['permanent_date'],
-                'remain_leaves'    => $data['remain_leaves'],
-                'total_leaves'     => $data['total_leaves'],
+                'staff_id'        => $data['staff_id'],
+                'permanent_date'  => $data['permanent_date'],
+                'remain_leaves'   => $leave,
+                'total_leaves'    => $leave,
+                'first_annual'    => $firstHalfLeave,
+                'second_annual'   => $secondHalfLeave,
             ];
             $leaveRecord = new LeaveRecordResource(LeaveRecord::create($createData));
             DB::commit();

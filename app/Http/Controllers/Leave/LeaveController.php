@@ -7,11 +7,13 @@ use App\Http\Requests\Leave\LeaveCreateRequest;
 use App\Http\Requests\Leave\LeaveGetRequest;
 use App\Http\Resources\Leave\LeaveResource;
 use App\Models\Leave;
+use App\Models\LeaveRecord;
 use Illuminate\Support\Facades\DB;
 use App\ReturnMessage;
 use Illuminate\Http\Request;
 use App\Utility;
 use Carbon\Carbon;
+use DateTime;
 
 class LeaveController extends Controller
 {
@@ -38,34 +40,47 @@ class LeaveController extends Controller
 
         try {
             $data = $request->all();
-            if (!isset($data['staff_id']) || !isset($data['leave_type'])) {
-                throw new \Exception("Required fields are missing");
-            }
-
-            $staffExists = DB::table('staffs')->where('id', $data['staff_id'])->exists();
-            if (!$staffExists) {
-                throw new \Exception("Staff with ID {$data['staff_id']} does not exist");
-            }
-
             $leaves = [];
+
             if (isset($data['start_date'])) {
-                $startDate = Carbon::parse($data['start_date']);
-                $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : $startDate;
+                $getDates =  $data['start_date'];
+                $carbonDates = array_map(fn($d) => Carbon::parse($d), $getDates);
+                $startDate = min($carbonDates);
+                $leaveYear = (int)$startDate->format('Y');
+                $firstPeriodStart = new DateTime("$leaveYear-01-01");
+                $firstPeriodEnd = (clone $firstPeriodStart)->modify('+6 months');
+                $leaveRecord = LeaveRecord::where('staff_id', $data['staff_id'])->latest()->first();
 
-                if ($startDate->gt($endDate)) {
-                    throw new \Exception("Start date cannot be after end date");
-                }
-
-                for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+                // 1 = paid & 0 = unpaid
+                foreach ($carbonDates as $date) {
+                    if ($startDate >= $firstPeriodStart && $startDate < $firstPeriodEnd) {
+                        if ($leaveRecord->first_annual > 0) {
+                            $leaveRecord->first_annual--;
+                            $status = 1;
+                        } else {
+                            $leaveRecord->first_annual--;
+                            $status = 0;
+                        }
+                    } else {
+                        if ($leaveRecord->second_annual > 0) {
+                            $leaveRecord->second_annual--;
+                            $status = 1;
+                        } else {
+                            $leaveRecord->second_annual--;
+                            $status = 0;
+                        }
+                    }
+                    $leaveRecord->total_used++;
+                    $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
+                    $leaveRecord->update();
                     $createData = [
-                        "staff_id"    => $data['staff_id'],
-                        "leave_type"  => $data['leave_type'],
-                        "leave_date"  => $date->format('Y-m-d'),
-                        "duration"    => 'full',
-                        "reason"      => $data['reason'] ?? null,
-                        "day_count"   => 1,
+                        "staff_id"   => $data['staff_id'],
+                        "leave_date" => $date->format('Y-m-d'),
+                        "duration"   => $data['duration'],
+                        "reason"     => $data['reason'] ?? null,
+                        "day_count"  => 1,
+                        "leave_type" => $status,
                     ];
-
                     $leave = Leave::create($createData);
                     $leaves[] = new LeaveResource($leave);
                 }
@@ -74,24 +89,56 @@ class LeaveController extends Controller
                     throw new \Exception("Leave date is required for single-day leave");
                 }
 
-                $createData = [
-                    "staff_id"    => $data['staff_id'],
-                    "leave_type"  => $data['leave_type'],
-                    "leave_date"  => $data['leave_date'],
-                    "duration"    => $data['duration'] ?? null,
-                    "reason"      => $data['reason'] ?? null,
-                    "day_count"   => 1,
-                ];
+                if (isset($data['leave_date'])) {
+                    $leaveDate = new DateTime($data['leave_date']);
+                    $leaveYear = (int)$leaveDate->format('Y');
+                    $firstPeriodStart = new DateTime("$leaveYear-01-01");
+                    $firstPeriodEnd = (clone $firstPeriodStart)->modify('+6 months');
+                    $leaveRecord = LeaveRecord::where('staff_id', $data['staff_id'])->latest()->first();
 
-                $leave = Leave::create($createData);
-                $leaves[] = new LeaveResource($leave);
+                    $durationMap = [
+                        1 => 1,
+                        2 => 0.5,
+                        3 => 0.4375,
+                        4 => 0.375,
+                        5 => 0.3125,
+                        6 => 0.25,
+                        7 => 0.1875,
+                        8 => 0.125,
+                        9 => 0.0625,
+                    ];
+                    $count = $durationMap[$data['duration']] ?? 0;
+
+                    // 1 = paid & 0 = unpaid
+                    if ($leaveDate >= $firstPeriodStart && $leaveDate < $firstPeriodEnd) {
+                        $update['first_annual'] = $leaveRecord->first_annual - $count;
+                        $status = ($leaveRecord->first_annual > 0) ? 1 : 0;
+                    } else {
+                        $update['second_annual'] = $leaveRecord->second_annual - $count;
+                        $status = ($leaveRecord->second_annual > 0) ? 1 : 0;
+                    }
+                    if (!empty($update)) {
+                        $leaveRecord->total_used += $count;
+                        $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
+                        $leaveRecord->update($update);
+                    }
+
+                    $createData = [
+                        "staff_id"    => $data['staff_id'],
+                        "leave_date"  => $data['leave_date'],
+                        "duration"    => $data['duration'] ?? null,
+                        "reason"      => $data['reason'] ?? null,
+                        "day_count"   => 1,
+                        "leave_type"  => $status,
+                    ];
+                    $leave = Leave::create($createData);
+                    $leaves[] = new LeaveResource($leave);
+                }
             }
-
             DB::commit();
-
             return response()->json([
                 'message' => 'Leave(s) created successfully',
-                'data' => $leaves
+                'data'    => $leaves
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();

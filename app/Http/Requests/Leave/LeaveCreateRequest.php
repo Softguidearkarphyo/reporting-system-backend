@@ -22,13 +22,11 @@ class LeaveCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'staff_id' => 'required|exists:staffs,id',
-            'leave_type' => 'required|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'staff_id'   => 'required|exists:staffs,id',
+            'start_date' => 'nullable',
             'leave_date' => 'nullable|date',
-            'duration' => 'nullable|string',
-            'reason' => 'nullable|string'
+            'duration'   => 'nullable',
+            'reason'     => 'nullable|string'
         ];
     }
 }

@@ -14,9 +14,14 @@ return new class extends Migration
         Schema::create('leave_record', function (Blueprint $table) {
             $table->id();
             $table->foreignId('staff_id')->constrained('staffs')->onDelete('cascade');
+            $table->year('year')->default(date('Y'));
             $table->date('permanent_date')->nullable();
-            $table->string('remain_leaves')->nullable();
-            $table->string('total_leaves')->nullable();
+            $table->float('carry_leaves')->default(0);
+            $table->float('remain_leaves')->default(0);
+            $table->float('first_annual')->default(0);
+            $table->float('second_annual')->default(0);
+            $table->float('total_used')->default(0);
+            $table->float('total_leaves')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
