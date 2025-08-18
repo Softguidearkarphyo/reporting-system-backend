@@ -75,7 +75,7 @@ class AuthController extends Controller
         }
     }
 
-    public function saveLocation($id, $lat, $lng)
+    public function saveLocation($id, $lat, $lon)
     {
         try {
             Location::upsert(
@@ -83,13 +83,13 @@ class AuthController extends Controller
                     [
                         'staff_id' => $id,
                         'lat' => $lat,
-                        'lng' => $lng,
+                        'lon' => $lon,
                         'updated_at' => now(),
                         'created_at' => now(),
                     ]
                 ],
                 ['staff_id'],
-                ['lat', 'lng', 'updated_at']
+                ['lat', 'lon', 'updated_at']
             );
         } catch (\Throwable  $e) {
             Utility::log("AuthController::saveLocation", $e->getMessage());
