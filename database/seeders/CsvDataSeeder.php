@@ -6,6 +6,7 @@ use App\Models\SkillSheet;
 use App\Models\Staff;
 use App\Models\StaffProject;
 use App\Models\StaffResponsibility;
+use App\Models\TaskPerformance;
 use App\Models\TechStackProficiency;
 use Illuminate\Database\Seeder;
 
@@ -19,6 +20,7 @@ class CsvDataSeeder extends Seeder
         $this->createStaffResponsibilities();
         $this->createSkillSheets();
         $this->createTechStackProficiencies();
+        $this->createTaskPerformance();
     }
 
     public function createStaffs()
@@ -102,6 +104,20 @@ class CsvDataSeeder extends Seeder
         }
     }
 
+    public function createTaskPerformance()
+    {
+        $csvData = $this->csvToData('csvData/task_performance.csv');
+
+        foreach ($csvData as $row) {
+            TaskPerformance::create([
+                'date'          => $row['date'],
+                'staff_id'      => $row['staff_id'],
+                'project_id'    => $row['project_id'],
+                'task_id'       => $row['task_id'],
+                'period'        => $row['period'],
+            ]);
+        }
+    }
     private function csvToData($filename, $delimiter = ',')
     {
         $data = [];
