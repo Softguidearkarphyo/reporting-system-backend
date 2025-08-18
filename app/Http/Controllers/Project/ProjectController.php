@@ -98,13 +98,22 @@ class ProjectController extends Controller
         try {
             $data = $request->all();
             $end_date = Carbon::parse($data['end_date']);
-            $week_count = (int)$data['week_date'];
-            $startDate = $end_date->copy()->subWeeks($week_count);
-            $query = TaskPerformance::whereHas('staff')
-                ->whereHas('project');
-            $result = $query->whereBetween('date', [$startDate, $end_date])->get();
-            $projects_hour = ProjectWorkHourResource::collection($result);
-            return response()->json($projects_hour);
+
+            if (isset($data['week_date'])) {
+                $week_count = (int)$data['week_date'];
+                $startDate = $end_date->copy()->subWeeks($week_count);
+                $query = TaskPerformance::whereHas('staff')->whereHas('project');
+                $result = $query->whereBetween('date', [$startDate, $end_date])->get();
+                $projects_hour = ProjectWorkHourResource::collection($result);
+                return response()->json($projects_hour);
+            } else {
+                $start_date = Carbon::parse($data['start_date'])->startOfMonth();
+                $end_date = $end_date->endOfMonth();
+                $query = TaskPerformance::whereHas('staff')->whereHas('project');
+                $result = $query->whereBetween('date', [$start_date, $end_date])->get();
+                $projects_hour = ProjectWorkHourResource::collection($result);
+                return response()->json($projects_hour);
+            }
         } catch (\Throwable  $e) {
             Utility::log("ProjectController::get", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
