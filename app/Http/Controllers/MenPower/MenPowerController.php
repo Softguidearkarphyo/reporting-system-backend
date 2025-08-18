@@ -19,7 +19,9 @@ class MenPowerController extends Controller
             $data = $request->all();
             $menHours = Project::leftJoin('task_performance', function ($join) use ($data) {
                 $join->on('projects.id', '=', 'task_performance.project_id')
-                    ->whereBetween('task_performance.date', [$data['start_date'], $data['end_date']]);
+                    ->when(isset($data['start_date']) && isset($data['end_date']), function ($fn) use ($data) {
+                        $fn->whereBetween('task_performance.date', [$data['start_date'], $data['end_date']]);
+                    });
             })
                 ->select('projects.*')
                 ->selectRaw('COUNT(DISTINCT task_performance.date) as days')
