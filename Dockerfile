@@ -1,4 +1,4 @@
-FROM sail-8.4/app
+FROM ghcr.io/laravel/sail/php:8.4
 
 # Install cron
 RUN apt-get update && apt-get install -y cron

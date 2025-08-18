@@ -32,7 +32,7 @@ services:
     mysql:
         image: mysql/mysql-server:8.0
         ports:
-            - "${FORWARD_DB_PORT:-3306}:3306"
+            - "${FORWARD_DB_PORT:-33307}:3306"
         environment:
             MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-password}"
             MYSQL_ROOT_HOST: "%"
@@ -61,7 +61,7 @@ services:
         volumes:
             - .:/var/www/html
             - ./storage/logs/cron.log:/var/log/cron.log
-        environment: 
+        environment:
             TZ: "Asia/Yangon"
             APP_TIMEZONE: "Asia/Yangon"
         depends_on:
