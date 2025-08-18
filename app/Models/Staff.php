@@ -80,13 +80,9 @@ class Staff extends Model
             'id'
         );
     }
-    public function leaves()
+    public function leave_records()
     {
-        return $this->hasMany(Leave::class, 'staff_id');
-    }
-    public function leaves_record()
-    {
-        return $this->hasMany(Leave::class, 'staff_id');
+        return $this->hasMany(LeaveRecord::class, 'staff_id');
     }
     public function over_times()
     {

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('leaves', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('staff_id')->constrained('staffs')->onDelete('cascade');
+            $table->foreignId('rec_id')->constrained('leave_record')->onDelete('cascade');
             $table->date('leave_date')->nullable();
             $table->string('duration')->nullable();
             $table->integer('day_count')->default(1);;
