@@ -74,7 +74,7 @@ class LeaveController extends Controller
                     $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
                     $leaveRecord->update();
                     $createData = [
-                        "staff_id"   => $data['staff_id'],
+                        "rec_id"     => $leaveRecord->id,
                         "leave_date" => $date->format('Y-m-d'),
                         "duration"   => $data['duration'],
                         "reason"     => $data['reason'] ?? null,
@@ -124,7 +124,7 @@ class LeaveController extends Controller
                     }
 
                     $createData = [
-                        "staff_id"    => $data['staff_id'],
+                        "rec_id"      => $leaveRecord->id,
                         "leave_date"  => $data['leave_date'],
                         "duration"    => $data['duration'] ?? null,
                         "reason"      => $data['reason'] ?? null,

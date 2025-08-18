@@ -15,9 +15,9 @@ class LeaveResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'staff_id'   => $this->staff_id,
-            'eng_name'   => $this->staff ? $this->staff->eng_name : 'Unknown',
-            'jp_name'    => $this->staff ? $this->staff->jp_name : 'Unknown',
+            'rec_id'     => $this->rec_id,
+            'eng_name'   => $this->leave_records->staff ? $this->leave_records->staff->eng_name : 'Unknown',
+            'jp_name'    => $this->leave_records->staff ? $this->leave_records->staff->jp_name : 'Unknown',
             'leave_type' => $this->leave_type,
             'day_count'  => $this->day_count,
             'status'     => $this->status,

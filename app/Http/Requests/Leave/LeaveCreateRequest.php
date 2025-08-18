@@ -23,9 +23,8 @@ class LeaveCreateRequest extends FormRequest
     {
         return [
             'staff_id'   => 'required|exists:staffs,id',
-            'start_date' => 'nullable',
-            'leave_date' => 'nullable|date',
-            'duration'   => 'nullable',
+            'leave_date' => 'required|date',
+            'duration'   => 'required|nullable',
             'reason'     => 'nullable|string'
         ];
     }
