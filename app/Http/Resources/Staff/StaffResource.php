@@ -21,7 +21,7 @@ class StaffResource extends JsonResource
     {
         $data = $request->all();
         $leave = $this->when(isset($data['leave']), function () {
-            return $this->leaves->filter(function ($item) {
+            return $this->leave_records->filter(function ($item) {
                 return Carbon::parse($item->leave_date)->format('Y-m') === Carbon::now()->format('Y-m');
             })->values()->all();
         });
