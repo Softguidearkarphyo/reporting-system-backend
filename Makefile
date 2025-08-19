@@ -10,6 +10,19 @@ setup:
 	docker-compose exec reporting-system php artisan migrate:fresh
 	docker-compose exec reporting-system php artisan optimize:clear
 
+init:
+	docker compose -f docker-compose.nginx.yml up --build -d
+	docker compose -f docker-compose.nginx.yml exec app cp .env.example .env
+	docker compose -f docker-compose.nginx.yml exec app php artisan key:generate
+	@sleep 10
+	@make --no-print-directory seed
+
+down:
+	docker compose -f docker-compose.nginx.yml down --volumes --remove-orphans
+
+seed:
+	docker compose -f docker-compose.nginx.yml exec app php artisan migrate:fresh --seed
+
 start:
 	./vendor/bin/sail up -d
 
