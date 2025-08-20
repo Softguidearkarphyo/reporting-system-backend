@@ -17,5 +17,14 @@ COPY . .
 #RUN crontab /etc/cron.d/laravel-cron
 
 # Start cron and php-fpm
-CMD cron && php-fpm
+#CMD cron && php-fpm
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Expose port for Railway
+EXPOSE 8080
+
+# Start Laravel dev server on Railway port
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
 
