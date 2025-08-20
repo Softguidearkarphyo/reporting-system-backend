@@ -8,7 +8,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Copy cron job definition
-COPY docker/laravel-cron /etc/cron.d/laravel-cron
+# COPY docker/laravel-cron /etc/cron.d/laravel-cron
 
 # Give permissions
 RUN chmod 0644 /etc/cron.d/laravel-cron
