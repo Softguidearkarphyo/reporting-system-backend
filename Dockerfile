@@ -1,27 +1,36 @@
+# Use Laravel Sail PHP 8.0 image with Composer
 FROM laravelsail/php80-composer:latest
 
-# Install cron
-RUN apt-get update && apt-get install -y cron
+# Install PHP extensions required by Laravel
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip unzip git \
+    && docker-php-ext-install pdo_mysql zip gd mbstring
 
-# Copy Laravel files
+# Set working directory
 WORKDIR /var/www/html
+
+# Copy Laravel project files
 COPY . .
 
-# Copy cron job definition
-# COPY docker/laravel-cron /etc/cron.d/laravel-cron
+# Fix permissions (optional but recommended)
+RUN chown -R www-data:www-data /var/www/html
 
-# Give permissions
-#RUN chmod 0644 /etc/cron.d/laravel-cron
-
-# Apply cron job
-#RUN crontab /etc/cron.d/laravel-cron
-
-# Start cron and php-fpm
-#CMD cron && php-fpm
+# Install Composer dependencies with unlimited memory
+RUN php -d memory_limit=-1 /usr/local/bin/composer install --no-dev --optimize-autoloader
 
 # Expose port for Railway
 EXPOSE 8080
 
-# Start Laravel dev server on Railway port
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Set environment variables for production if needed
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV APP_KEY=
 
+# Optional: run migrations and set key automatically (use --force for production)
+CMD php artisan key:generate --ansi && \
+    php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
