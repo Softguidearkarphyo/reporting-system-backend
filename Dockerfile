@@ -23,7 +23,7 @@ RUN chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data /var/www/html
 
 # Install Composer dependencies
-RUN composer install 
+RUN composer update 
 
 # Expose port for Railway
 EXPOSE 8080
