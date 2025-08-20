@@ -14,8 +14,12 @@ init:
 	docker compose -f docker-compose.nginx.yml up --build -d
 	docker compose -f docker-compose.nginx.yml exec app cp .env.example .env
 	docker compose -f docker-compose.nginx.yml exec app php artisan key:generate
-	@sleep 10
-	@make --no-print-directory seed
+	@echo "Waiting for MySQL to be ready..."
+	@until docker compose -f docker-compose.nginx.yml exec app php artisan migrate:fresh --seed >/dev/null 2>&1; do \
+		echo "MySQL not ready yet, retrying ..."; \
+		sleep 3; \
+	done
+	@echo "MySQL ready, migrations and seeders run successfully!"
 
 down:
 	docker compose -f docker-compose.nginx.yml down --volumes --remove-orphans
