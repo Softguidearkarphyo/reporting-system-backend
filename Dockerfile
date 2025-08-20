@@ -1,4 +1,4 @@
-FROM sail-8.4/app
+FROM laravelsail/php80-composer:latest
 
 # Install cron
 RUN apt-get update && apt-get install -y cron
