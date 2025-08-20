@@ -11,10 +11,10 @@ COPY . .
 # COPY docker/laravel-cron /etc/cron.d/laravel-cron
 
 # Give permissions
-RUN chmod 0644 /etc/cron.d/laravel-cron
+#RUN chmod 0644 /etc/cron.d/laravel-cron
 
 # Apply cron job
-RUN crontab /etc/cron.d/laravel-cron
+#RUN crontab /etc/cron.d/laravel-cron
 
 # Start cron and php-fpm
 CMD cron && php-fpm
