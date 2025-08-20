@@ -19,9 +19,6 @@ COPY . .
 # Start cron and php-fpm
 #CMD cron && php-fpm
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
-
 # Expose port for Railway
 EXPOSE 8080
 
