@@ -10,7 +10,7 @@ clear:
 	docker image rm -f $$(docker images -q)
 	docker volume rm -f $$(docker volume ls -q)
 init:
-	cp -n ./src/.env.example ./src/.env
+	cp -n .env.example .env
 	@make build
 	@make up
 	docker compose exec app chmod -R 777 storage bootstrap/cache
