@@ -1,0 +1,17 @@
+### User-specific stuff:
+/.git*
+/.idea/workspace.xml
+.dockerignore
+
+### Other data
+storage/mysql-data
+vendor/
+bootstrap/cache
+!bootstrap/cache/.gitignore
+.phpstorm.meta.php
+_ide_helper.php
+
+### Vendor bin dependencies
+/tools/*/vendor/
+.phpunit.cache
+.phpunit.result.cache
