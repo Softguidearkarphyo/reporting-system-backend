@@ -18,10 +18,10 @@ use App\Http\Controllers\TaskPerformanceSetting\TaskPerformanceSettingController
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
     Route::prefix('/staff')->group(function () {
-        Route::get('/get', [StaffController::class, 'get']);
+        Route::post('/get', [StaffController::class, 'get']);
         Route::post('/create', [StaffController::class, 'create']);
         Route::post('/update', [StaffController::class, 'update']);
-        Route::delete('/delete', [StaffController::class, 'delete']);
+        Route::post('/delete', [StaffController::class, 'delete']);
     });
     Route::prefix('/project')->group(function () {
         Route::post('/get', [ProjectController::class, 'get']);
