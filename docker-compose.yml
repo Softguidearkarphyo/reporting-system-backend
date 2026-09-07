@@ -1,76 +1,94 @@
 services:
-    reporting-system:
-        build:
-            context: ./vendor/laravel/sail/runtimes/8.4
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: "${WWWGROUP:-1000}"
-        image: sail-8.4/app
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
-        ports:
-            - "${APP_PORT:-80}:80"
-            # - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
-        environment:
-            WWWUSER: "${WWWUSER:-1000}"
-            LARAVEL_SAIL: 1
-            XDEBUG_MODE: "${SAIL_XDEBUG_MODE:-off}"
-            XDEBUG_CONFIG: "${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}"
-            IGNITION_LOCAL_SITES_PATH: "${PWD}"
-            DB_HOST: mysql
-            DB_PORT: 3306
-            DB_DATABASE: "${DB_DATABASE:-laravel}"
-            DB_USERNAME: "${DB_USERNAME:-sail}"
-            DB_PASSWORD: "${DB_PASSWORD:-password}"
-        volumes:
-            - .:/var/www/html
-        networks:
-            - sail
-        depends_on:
-            - mysql
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reporting-app
+    volumes:
+      - .:/var/www
+      - ./docker/php/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    working_dir: /var/www
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      INSTALL_COMPOSER_DEPS: "1"
+    depends_on:
+      mysql:
+        condition: service_healthy
 
-    mysql:
-        image: mysql/mysql-server:8.0
-        ports:
-            - "${FORWARD_DB_PORT:-3306}:3306"
-        environment:
-            MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-password}"
-            MYSQL_ROOT_HOST: "%"
-            MYSQL_DATABASE: "${DB_DATABASE:-laravel}"
-            MYSQL_USER: "${DB_USERNAME:-sail}"
-            MYSQL_PASSWORD: "${DB_PASSWORD:-password}"
-            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-        volumes:
-            - sail-mysql:/var/lib/mysql
-            - ./vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh
-        networks:
-            - sail
-        healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD:-password}"]
-            retries: 3
-            timeout: 5s
-    scheduler:
-        build:
-            context: ./vendor/laravel/sail/runtimes/8.4
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: "${WWWGROUP:-1000}"
-        container_name: scheduler
-        restart: unless-stopped
-        user: root
-        volumes:
-            - .:/var/www/html
-            - ./storage/logs/cron.log:/var/log/cron.log
-        environment: 
-            TZ: "Asia/Yangon"
-            APP_TIMEZONE: "Asia/Yangon"
-        depends_on:
-            - reporting-system
-        command: ["cron", "-f"]
-networks:
-    sail:
-        driver: bridge
+  web:
+    image: nginx:alpine
+    container_name: reporting-nginx
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: reporting-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: ${DB_DATABASE:-reporting}
+    ports:
+      - "33308:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reporting-queue
+    volumes:
+      - .:/var/www
+      - ./docker/php/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    working_dir: /var/www
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+    command: php artisan queue:work --sleep=3 --tries=1
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reporting-scheduler
+    volumes:
+      - .:/var/www
+      - ./docker/php/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    working_dir: /var/www
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+    command: php artisan schedule:work
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
 
 volumes:
-    sail-mysql:
-        driver: local
+  dbdata:
+    name: reporting-system_backend_dbdata

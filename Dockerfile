@@ -1,34 +1,23 @@
-# Use Laravel Sail PHP 8.3 image with Composer
-FROM laravelsail/php83-composer:latest
+FROM php:8.3-fpm
 
-# Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip unzip git \
-    && docker-php-ext-install pdo_mysql zip gd mbstring
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www/html
+RUN docker-php-ext-install -j$(nproc) \
+        bcmath \
+        opcache \
+        pcntl \
+        pdo_mysql
 
-# Copy Laravel project files
-COPY . .
+COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Set correct permissions
-RUN chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html
+WORKDIR /var/www
 
-# Install Composer dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+ARG PUID=1000
+ARG PGID=1000
+RUN groupmod -o -g ${PGID} www-data \
+    && usermod -o -u ${PUID} www-data
 
-# Expose port for Railway
-EXPOSE 8080
-
-# Start Laravel server
-CMD php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache && \
-    php artisan migrate --seed --force && \
-    php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]

@@ -1,61 +1,114 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Reporting System Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 API for the Mirai reporting system. Local development runs on Docker with a live source mount, so edits under `app/`, `routes/`, and related folders apply without rebuilding the image.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Docker Desktop (or Docker Engine + Compose v2)
+- Make (optional; commands below also work as plain `docker compose`)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Quick start
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+cd reporting-system_backend
 
-## Learning Laravel
+# Create env file if needed
+cp -n .env.example .env
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# Build and start all services
+make up
+# or: docker compose up --build -d
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# Generate app key (first time only, if APP_KEY is empty)
+docker compose exec app php artisan key:generate
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Run migrations (and seeders if needed)
+make migrate
+# or: make seed
+```
 
-## Laravel Sponsors
+API base URL: **http://localhost:8080**
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Example login endpoint: `POST http://localhost:8080/api/login`
 
-### Premium Partners
+## Services
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| Service     | Container             | Role                          | Host port |
+|-------------|-----------------------|-------------------------------|-----------|
+| `web`       | `reporting-nginx`     | Nginx                         | **8080**  |
+| `app`       | `reporting-app`       | PHP 8.3 FPM                   | 9000 (internal) |
+| `mysql`     | `reporting-mysql`     | MySQL 8                       | **33308** |
+| `queue`     | `reporting-queue`     | `php artisan queue:work`      | —         |
+| `scheduler` | `reporting-scheduler` | `php artisan schedule:work`   | —         |
 
-## Contributing
+Project source is bind-mounted to `/var/www` in `app`, `web`, `queue`, and `scheduler`.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Makefile commands
 
-## Code of Conduct
+```bash
+make up        # build and start in background
+make down      # stop containers
+make restart   # down + up --build
+make logs      # follow container logs
+make migrate   # php artisan migrate
+make seed      # migrate:fresh --seed
+make clear     # php artisan optimize:clear
+make composer  # install PHP deps via composer:2 image
+make artisan   # run artisan inside the app container
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Environment
 
-## Security Vulnerabilities
+Copy from `.env.example`. Important defaults for Docker:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```env
+APP_URL=http://localhost:8080
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=reporting
+DB_USERNAME=root
+DB_PASSWORD=root
+SANCTUM_STATEFUL_DOMAINS=localhost,localhost:5173,localhost:5174,localhost:8080,127.0.0.1,127.0.0.1:5173,127.0.0.1:5174,127.0.0.1:8080
+```
 
-## License
+CORS allows local Vite origins (`localhost` / `127.0.0.1` on common ports). See `config/cors.php`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Frontend
+
+Point the Vue app API URL at this backend, then restart Vite so `.env` is reloaded:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api/
+```
+
+## Composer
+
+`composer.json` targets PHP `^8.2`. The Docker image uses PHP 8.3.
+
+After changing `composer.json` / `composer.lock`:
+
+```bash
+make composer
+# or
+docker run --rm -v "$PWD:/app" -w /app composer:2 install --no-interaction --prefer-dist --ignore-platform-reqs
+```
+
+`vendor/` lives on the host mount. Do not bake application source into the image for local work.
+
+## Project layout (Docker)
+
+```
+Dockerfile                 # PHP 8.3 FPM + Composer (no app COPY)
+docker-compose.yml         # app, web, mysql, queue, scheduler
+docker/nginx/default.conf  # Nginx → PHP-FPM
+docker/php/entrypoint.sh   # wait for vendor / clear caches
+docker/php/local.ini       # PHP limits
+Makefile                   # common docker/artisan shortcuts
+```
+
+## Notes
+
+- Host port **80** may already be used by another nginx (for example WSL). This stack uses **8080** on purpose.
+- MySQL from the host: `127.0.0.1:33308` (user/password from `.env`).
+- Inside containers, MySQL host is `mysql` on port `3306`.
