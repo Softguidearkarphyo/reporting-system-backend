@@ -34,120 +34,148 @@ class LeaveController extends Controller
         }
     }
 
-    public function create(LeaveCreateRequest $request)
-    {
-        DB::beginTransaction();
+public function create(LeaveCreateRequest $request)
+{
+    DB::beginTransaction();
 
-        try {
-            $data = $request->all();
-            $leaves = [];
+    try {
+        $data = $request->validated();
+        $leaves = [];
 
-            if (isset($data['start_date'])) {
-                $getDates =  $data['start_date'];
-                $carbonDates = array_map(fn($d) => Carbon::parse($d), $getDates);
-                $startDate = min($carbonDates);
-                $leaveYear = (int)$startDate->format('Y');
-                $firstPeriodStart = new DateTime("$leaveYear-01-01");
-                $firstPeriodEnd = (clone $firstPeriodStart)->modify('+6 months');
-                $leaveRecord = LeaveRecord::where('staff_id', $data['staff_id'])->latest()->first();
+        $durationMap = [
+            1 => 1.0,      // Full day (8 Hours)
+            2 => 0.5,      // Half day (4 Hours)
+            3 => 0.4375,   // 3 Hrs 30 Min
+            4 => 0.375,    // 3 Hours
+            5 => 0.3125,   // 2 Hrs 30 Min
+            6 => 0.25,     // 2 Hours
+            7 => 0.1875,   // 1 Hr 30 Min
+            8 => 0.125,    // 1 Hour
+            9 => 0.0625,   // 30 Minutes
+        ];
 
-                // 1 = paid & 0 = unpaid
-                foreach ($carbonDates as $date) {
-                    if ($startDate >= $firstPeriodStart && $startDate < $firstPeriodEnd) {
-                        if ($leaveRecord->first_annual > 0) {
-                            $leaveRecord->first_annual--;
-                            $status = 1;
-                        } else {
-                            $leaveRecord->first_annual--;
-                            $status = 0;
-                        }
-                    } else {
-                        if ($leaveRecord->second_annual > 0) {
-                            $leaveRecord->second_annual--;
-                            $status = 1;
-                        } else {
-                            $leaveRecord->second_annual--;
-                            $status = 0;
-                        }
-                    }
-                    $leaveRecord->total_used++;
-                    $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
-                    $leaveRecord->update();
-                    $createData = [
-                        "rec_id"     => $leaveRecord->id,
-                        "leave_date" => $date->format('Y-m-d'),
-                        "duration"   => $data['duration'],
-                        "reason"     => $data['reason'] ?? null,
-                        "day_count"  => 1,
-                        "leave_type" => $status,
-                    ];
-                    $leave = Leave::create($createData);
-                    $leaves[] = new LeaveResource($leave);
-                }
-            } else {
-                if (!isset($data['leave_date'])) {
-                    throw new \Exception("Leave date is required for single-day leave");
-                }
+        $stringToDurationId = [
+            'Full Day'  => 1,
+            'Half Day'  => 2,
+            '1 Day'     => 1,
+            '0.5 Day'   => 2,
+        ];
 
-                if (isset($data['leave_date'])) {
-                    $leaveDate = new DateTime($data['leave_date']);
-                    $leaveYear = (int)$leaveDate->format('Y');
-                    $firstPeriodStart = new DateTime("$leaveYear-01-01");
-                    $firstPeriodEnd = (clone $firstPeriodStart)->modify('+6 months');
-                    $leaveRecord = LeaveRecord::where('staff_id', $data['staff_id'])->latest()->first();
+        $requestedDuration = $data['duration'] ?? 1;
+        if (is_numeric($requestedDuration)) {
+            $durationId = (int) $requestedDuration;
+        } else {
+            $durationId = $stringToDurationId[$requestedDuration] ?? 1;
+        }
 
-                    $durationMap = [
-                        1 => 1,
-                        2 => 0.5,
-                        3 => 0.4375,
-                        4 => 0.375,
-                        5 => 0.3125,
-                        6 => 0.25,
-                        7 => 0.1875,
-                        8 => 0.125,
-                        9 => 0.0625,
-                    ];
-                    $count = $durationMap[$data['duration']] ?? 0;
-
-                    // 1 = paid & 0 = unpaid
-                    if ($leaveDate >= $firstPeriodStart && $leaveDate < $firstPeriodEnd) {
-                        $update['first_annual'] = $leaveRecord->first_annual - $count;
-                        $status = ($leaveRecord->first_annual > 0) ? 1 : 0;
-                    } else {
-                        $update['second_annual'] = $leaveRecord->second_annual - $count;
-                        $status = ($leaveRecord->second_annual > 0) ? 1 : 0;
-                    }
-                    if (!empty($update)) {
-                        $leaveRecord->total_used += $count;
-                        $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
-                        $leaveRecord->update($update);
-                    }
-
-                    $createData = [
-                        "rec_id"      => $leaveRecord->id,
-                        "leave_date"  => $data['leave_date'],
-                        "duration"    => $data['duration'] ?? null,
-                        "reason"      => $data['reason'] ?? null,
-                        "day_count"   => 1,
-                        "leave_type"  => $status,
-                    ];
-                    $leave = Leave::create($createData);
-                    $leaves[] = new LeaveResource($leave);
+        $getDurationId = function ($amount, $fallbackId) use ($durationMap) {
+            foreach ($durationMap as $id => $val) {
+                if (abs($val - $amount) < 0.0001) {
+                    return $id;
                 }
             }
-            DB::commit();
-            return response()->json([
-                'message' => 'Leave(s) created successfully',
-                'data'    => $leaves
-            ], 201);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Utility::log("LeaveController::create", $e->getMessage());
+            return $fallbackId;
+        };
 
-            return response()->json([
-                'status' => ReturnMessage::INTERNAL_SERVER_ERROR,
-                'error' => $e->getMessage()
-            ], 500);
+        $datesToProcess = [];
+        if (!empty($data['multi_date']) && is_array($data['multi_date'])) {
+            $datesToProcess = array_map(fn($d) => Carbon::parse($d), $data['multi_date']);
+        } elseif (!empty($data['start_date']) && is_array($data['start_date'])) {
+            $datesToProcess = array_map(fn($d) => Carbon::parse($d), $data['start_date']);
+        } elseif (!empty($data['leave_date'])) {
+            $datesToProcess = [Carbon::parse($data['leave_date'])];
+        } else {
+            throw new \Exception("Leave date, multi_date, or start_date is required.");
         }
+
+        $appliedDuration = $durationMap[$durationId] ?? 1.0;
+
+        foreach ($datesToProcess as $leaveDate) {
+            $leaveYear = (int) $leaveDate->format('Y');
+
+            $leaveRecord = LeaveRecord::where('staff_id', $data['staff_id'])
+                ->where('year', $leaveYear)
+                ->first();
+
+            if (!$leaveRecord) {
+                throw new \Exception("Leave record for year {$leaveYear} not found.");
+            }
+
+            $firstPeriodStart = Carbon::createFromDate($leaveYear, 1, 1)->startOfDay();
+            $firstPeriodEnd   = Carbon::createFromDate($leaveYear, 6, 30)->endOfDay();
+            $isFirstHalf      = ($leaveDate >= $firstPeriodStart && $leaveDate <= $firstPeriodEnd);
+
+            $availableBalance = $isFirstHalf ? $leaveRecord->first_annual : $leaveRecord->second_annual;
+
+            if ($availableBalance >= $appliedDuration) {
+                // CASE 1: Full Paid Leave
+                $paidAmount   = $appliedDuration;
+                $unpaidAmount = 0.0;
+            } elseif ($availableBalance > 0) {
+                // CASE 2: Split Leave (e.g., Paid + Unpaid)
+                $paidAmount   = $availableBalance;
+                $unpaidAmount = $appliedDuration - $availableBalance;
+            } else {
+                // CASE 3: Full Unpaid Leave
+                $paidAmount   = 0.0;
+                $unpaidAmount = $appliedDuration;
+            }
+
+            // --- 1. Process Paid Portion ---
+            if ($paidAmount > 0) {
+                if ($isFirstHalf) {
+                    $leaveRecord->first_annual -= $paidAmount;
+                } else {
+                    $leaveRecord->second_annual -= $paidAmount;
+                }
+
+                $leaveRecord->total_used += $paidAmount;
+                $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
+                $leaveRecord->save();
+
+                $paidDurationId = $getDurationId($paidAmount, $durationId);
+
+                $paidLeave = Leave::create([
+                    "rec_id"     => $leaveRecord->id,
+                    "leave_date" => $leaveDate->format('Y-m-d'),
+                    "duration"   => $paidDurationId,
+                    "reason"     => $data['reason'] ?? null,
+                    "day_count"  => $paidAmount,
+                    "leave_type" => 1, // Paid
+                ]);
+                $leaves[] = new LeaveResource($paidLeave);
+            }
+
+            if ($unpaidAmount > 0) {
+                $unpaidDurationId = $getDurationId($unpaidAmount, $durationId);
+
+                $unpaidLeave = Leave::create([
+                    "rec_id"     => $leaveRecord->id,
+                    "leave_date" => $leaveDate->format('Y-m-d'),
+                    "duration"   => $unpaidDurationId,
+                    "reason"     => $data['reason'] ?? null,
+                    "day_count"  => $unpaidAmount,
+                    "leave_type" => 0, // Unpaid
+                ]);
+                $leaves[] = new LeaveResource($unpaidLeave);
+            }
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Leave(s) processed successfully',
+            'data'    => $leaves
+        ], 201);
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Utility::log("LeaveController::create", $e->getMessage());
+
+        return response()->json([
+            'status' => ReturnMessage::INTERNAL_SERVER_ERROR,
+            'error'  => $e->getMessage()
+        ], 500);
     }
+}
 }

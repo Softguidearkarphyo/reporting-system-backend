@@ -19,13 +19,17 @@ class LeaveCreateRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+   public function rules(): array
     {
         return [
-            'staff_id'   => 'required|exists:staffs,id',
-            'leave_date' => 'required',
-            'duration'   => 'required|nullable',
-            'reason'     => 'nullable|string'
+            'staff_id'    => 'required|exists:staffs,id',
+            
+            'leave_date'  => 'nullable|required_without:multi_date',
+            'multi_date'  => 'nullable|required_without:leave_date|array',
+            'multi_date.*'=> 'nullable|string',
+            'duration'    => 'required', 
+            
+            'reason'      => 'nullable|string',
         ];
     }
 }

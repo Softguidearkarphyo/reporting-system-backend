@@ -7,76 +7,120 @@ use App\Http\Requests\LeaveRecord\LeaveRecordCreateRequest;
 use App\Http\Requests\LeaveRecord\LeaveRecordGetRequest;
 use App\Http\Resources\LeaveRecord\LeaveRecordResource;
 use App\Models\LeaveRecord;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\ReturnMessage;
 use App\Utility;
+use Carbon\Carbon; 
 use DateTime;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LeaveRecordController extends Controller
 {
-
     public function get(LeaveRecordGetRequest $request)
     {
         try {
-            $data   = $request->all();
+            $data  = $request->all();
             $query = LeaveRecord::with('staff');
             if (!empty($data['id'])) {
                 $query->where('id', $data['id']);
             }
             $leaveRecord = $query->get();
             $leaveRecord = LeaveRecordResource::collection($leaveRecord);
+
             return response()->json($leaveRecord);
-        } catch (\Throwable  $e) {
+        } catch (\Throwable $e) {
             Utility::log("LeaveRecordController::get", $e->getMessage());
+
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function create(LeaveRecordCreateRequest $request)
-    {
-        DB::beginTransaction();
-        try {
-            $data = $request->all();
-            if (isset($data['permanent_date'])) {
-                $permanent_date = new DateTime($data['permanent_date']);
-                $currentYear = (int)$permanent_date->format('Y');
-                $firstPeriodStart = new DateTime("$currentYear-01-01");
-                $yearEnd = new DateTime("$currentYear-12-31");
-                $firstPeriodEnd = (clone $firstPeriodStart)->modify('+6 months');
-                $totalDays = (int)$yearEnd->diff($firstPeriodStart)->format('%a') + 1;
-                $remainingDays = (int)$yearEnd->diff($permanent_date)->format('%a') + 1;
-                $totalLeave = 10;
-                $leave = round(($remainingDays / $totalDays) * $totalLeave * 2) / 2;
-                $firstHalfLeave = 0;
-                if ($permanent_date <= $firstPeriodEnd) {
-                    $totalFirstHalfDays = (int)$firstPeriodEnd->diff($firstPeriodStart)->format('%a') + 1;
-                    $remainingFirstHalfDays = (int)$firstPeriodEnd->diff($permanent_date)->format('%a') + 1;
-                    $firstHalfLeave = round(($remainingFirstHalfDays / $totalFirstHalfDays) * ($totalLeave / 2) * 2) / 2;
-                }
-                $secondHalfLeave = 0;
-                if ($permanent_date > $firstPeriodEnd) {
-                    $remainingSecondHalfDays = (int)$yearEnd->diff($permanent_date)->format('%a') + 1;
-                    $secondHalfLeave = round(($remainingSecondHalfDays / ($totalDays / 2)) * ($totalLeave / 2) * 2) / 2;
-                } else {
-                    $secondHalfLeave = $totalLeave / 2;
-                }
-            }
-            $createData = [
-                'staff_id'        => $data['staff_id'],
-                'permanent_date'  => $data['permanent_date'],
-                'remain_leaves'   => $leave,
-                'total_leaves'    => $leave,
-                'first_annual'    => $firstHalfLeave,
-                'second_annual'   => $secondHalfLeave,
-            ];
-            $leaveRecord = new LeaveRecordResource(LeaveRecord::create($createData));
-            DB::commit();
-            return response()->json($leaveRecord);
-        } catch (\Throwable  $e) {
-            DB::rollBack();
-            Utility::log("LeaveRecordController::create", $e->getMessage());
-            return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
+public function create(LeaveRecordCreateRequest $request)
+{
+    DB::beginTransaction();
+    try {
+        $data = $request->validated();
+        $permanentDate = Carbon::parse($data['permanent_date']);
+        
+        $targetYear = isset($data['year']) ? (int) $data['year'] : now()->year;
+        $permanentYear = $permanentDate->year;
+
+        if ($targetYear < $permanentYear) {
+            return response()->json([
+                'error' => "Cannot create leave record for {$targetYear} prior to permanent date ({$permanentDate->toDateString()})."
+            ], 422);
         }
+
+        $roundToHalf = fn($value) => round($value * 2) / 2;
+
+        if ($targetYear > $permanentYear) {
+            $totalLeave      = 10.0;
+            $firstHalfLeave  = 5.0;
+            $secondHalfLeave = 5.0;
+        } else {
+            $yearStart = Carbon::createFromDate($targetYear, 1, 1)->startOfDay();
+            $yearEnd   = Carbon::createFromDate($targetYear, 12, 31)->startOfDay();
+            $midYear   = Carbon::createFromDate($targetYear, 6, 30)->startOfDay();
+            $h2Start   = Carbon::createFromDate($targetYear, 7, 1)->startOfDay();
+
+            $totalDaysInYear     = $yearStart->diffInDays($yearEnd) + 1;
+            $remainingDaysInYear = $permanentDate->diffInDays($yearEnd) + 1;
+
+            $totalLeave = $roundToHalf(($remainingDaysInYear / $totalDaysInYear) * 10);
+
+            if ($permanentDate->lte($midYear)) {
+                $h1TotalDays     = $yearStart->diffInDays($midYear) + 1;
+                $h1RemainingDays = $permanentDate->diffInDays($midYear) + 1;
+
+                $firstHalfLeave  = $roundToHalf(($h1RemainingDays / $h1TotalDays) * 5);
+                $secondHalfLeave = 5.0;
+            } else {
+                $h2TotalDays     = $h2Start->diffInDays($yearEnd) + 1;
+                $h2RemainingDays = $permanentDate->diffInDays($yearEnd) + 1;
+
+                $firstHalfLeave  = 0.0;
+                $secondHalfLeave = $roundToHalf(($h2RemainingDays / $h2TotalDays) * 5);
+            }
+        }
+
+        $leaveRecord = LeaveRecord::withTrashed()
+            ->where('staff_id', $data['staff_id'])
+            ->where('year', $targetYear)
+            ->first();
+
+        $recordData = [
+            'staff_id'       => $data['staff_id'],
+            'year'           => $targetYear,
+            'permanent_date' => $data['permanent_date'],
+            'remain_leaves'  => $totalLeave,
+            'total_leaves'   => $totalLeave,
+            'first_annual'   => $firstHalfLeave,
+            'second_annual'  => $secondHalfLeave,
+            'total_used'     => 0,
+        ];
+
+        if ($leaveRecord) {
+            if ($leaveRecord->trashed()) {
+                $leaveRecord->restore();
+            }
+            $leaveRecord->update($recordData);
+        } else {
+            $leaveRecord = LeaveRecord::create($recordData);
+        }
+
+        DB::commit();
+
+        return response()->json(new LeaveRecordResource($leaveRecord), 200);
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+
+        Utility::log("LeaveRecordController::create", $e->getMessage());
+
+        return response()->json([
+            'error'   => 'Failed to create leave record',
+            'details' => $e->getMessage(),
+        ], 500);
     }
+}
 }

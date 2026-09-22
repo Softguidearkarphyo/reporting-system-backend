@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes; 
 class LeaveRecord extends Model
 {
+    use SoftDeletes; 
+
     protected $table = 'leave_record';
 
     protected $fillable = [
         'staff_id',
+        'year', 
         'permanent_date',
         'remain_leaves',
         'carry_leaves',
