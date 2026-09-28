@@ -6,6 +6,7 @@ use DateTime;
 use App\Utility;
 use Carbon\Carbon;
 use App\Models\Staff;
+use App\Models\LeaveRecord;
 use App\ReturnMessage;
 use App\Models\StaffFine;
 use App\Models\StaffProject;
@@ -89,61 +90,79 @@ class StaffController extends Controller
         }
     }
 
-    public function update(StaffUpdateRequest $request)
-    {
-        DB::beginTransaction();
-        try {
-            $data   = $request->all();
-            if ($request->hasFile('staff_image') && $request->file('staff_image')->isValid()) {
-                $file = $request->file('staff_image');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('images/staffs'), $fileName);
-            } else {
-                $fileName = $request->input('staff_image');
-            }
-            $updateData = [
-                "staff_no"          => $data['staff_no'],
-                "eng_name"          => $data['eng_name'],
-                "jp_name"           => $data['jp_name'],
-                "username"          => $data['username'],
-                "address"           => $data['address'],
-                "ph_number"         => $data['ph_number'],
-                "position"          => $data['position'],
-                "role"              => $data['role'],
-                "email"             => $data['email'],
-                "permanent_date"    => $data['permanent_date'],
-                "ref_person"        => $data['ref_person'] ?? null,
-                "ref_ph_number"     => $data['ref_ph_number'] ?? null,
-                "sort_key"          => $data['sort_key'] ?? null,
-                "staff_image"       => $fileName ?? null,
+public function update(StaffUpdateRequest $request)
+{
+    DB::beginTransaction();
+    try {
+        $data = $request->all();
+
+        $Staff = Staff::find($data['id']);
+        if (!$Staff) {
+            return [
+                "status"  => ReturnMessage::NOT_FOUND,
+                "message" => "Member not found."
             ];
-            if (!empty($data['password'])) {
-                $updateData['password'] = Hash::make($data['password']);
-            }
-            $Staff = Staff::where('id', $data['id'])->first();
-            $Staff->update($updateData);
-
-            StaffProject::where('staff_id', $data['id'])->delete();
-
-            // if (!empty($data['project']) && is_array($data['project'])) {
-            //     $insertData = [];
-            //     foreach ($data['project'] as $projectId) {
-            //         $insertData[] = [
-            //             'staff_id'   => $data['id'],
-            //             'project_id' => $projectId,
-            //         ];
-            //     }
-            //     StaffProject::insert($insertData);
-            // }
-            DB::commit();
-            return ["status" => ReturnMessage::OK, 'staff' => $Staff];
-        } catch (\Throwable  $e) {
-            DB::rollBack();
-            Utility::log("MemberController::update", $e->getMessage());
-            return ["status" => ReturnMessage::INTERNAL_SERVER_ERROR];
         }
-    }
 
+        $hasLeaveRecord = LeaveRecord::where('staff_id', $data['id'])->exists();
+
+        if ($request->hasFile('staff_image') && $request->file('staff_image')->isValid()) {
+            $file = $request->file('staff_image');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('images/staffs'), $fileName);
+        } else {
+            $fileName = $request->input('staff_image');
+        }
+
+        $updateData = [
+            "staff_no"          => $data['staff_no'],
+            "eng_name"          => $data['eng_name'],
+            "jp_name"           => $data['jp_name'],
+            "username"          => $data['username'],
+            "address"           => $data['address'],
+            "ph_number"         => $data['ph_number'],
+            "position"          => $data['position'],
+            "role"              => $data['role'],
+            "email"             => $data['email'],
+            "ref_person"        => $data['ref_person'] ?? null,
+            "ref_ph_number"     => $data['ref_ph_number'] ?? null,
+            "sort_key"          => $data['sort_key'] ?? null,
+            "staff_image"       => $fileName ?? null,
+        ];
+
+        if (!$hasLeaveRecord) {
+            $updateData['permanent_date'] = $data['permanent_date'];
+            $message = "Member updated successfully.";
+        } else {
+            $message = "Member updated (permanent date skipped).";
+        }
+
+        if (!empty($data['password'])) {
+            $updateData['password'] = Hash::make($data['password']);
+        }
+
+        $Staff->update($updateData);
+
+        StaffProject::where('staff_id', $data['id'])->delete();
+
+        DB::commit();
+
+        return [
+            "status"  => ReturnMessage::OK,
+            "message" => $message,
+            "staff"   => $Staff
+        ];
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Utility::log("MemberController::update", $e->getMessage());
+
+        return [
+            "status"  => ReturnMessage::INTERNAL_SERVER_ERROR,
+            "message" => "Failed to update member."
+        ];
+    }
+}
     public function delete(StaffDeleteRequest $request)
     {
         DB::beginTransaction();

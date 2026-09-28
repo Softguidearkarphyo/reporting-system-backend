@@ -23,11 +23,23 @@ class LeaveRecordCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'staff_id'        => ['required', Rule::unique('leave_record', 'staff_id')],
-            'permanent_date'  => ['required', 'date'],
-            'remain_leaves'   => ['nullable'],
-            'total_given'     => ['nullable'],
-            'total_used'      => ['nullable'],
+            'staff_id'       => ['required', Rule::unique('leave_record', 'staff_id')],
+            'permanent_date' => ['required', 'date'],
+            'remain_leaves'  => ['nullable'],
+            'total_given'    => ['nullable'],
+            'total_used'     => ['nullable'],
+        ];
+    }
+
+    /**
+     * Custom error messages for validation rules.
+     */
+    public function messages(): array
+    {
+        return [
+            'staff_id.unique'    => 'Leave record already exists.',
+            'staff_id.required'  => 'Member ID is required.',
+            'permanent_date.required' => 'Permanent date is required.',
         ];
     }
 }
