@@ -16,24 +16,35 @@ use Illuminate\Support\Facades\DB;
 
 class LeaveRecordController extends Controller
 {
-    public function get(LeaveRecordGetRequest $request)
-    {
-        try {
-            $data  = $request->all();
-            $query = LeaveRecord::with('staff');
-            if (!empty($data['id'])) {
-                $query->where('id', $data['id']);
-            }
-            $leaveRecord = $query->get();
-            $leaveRecord = LeaveRecordResource::collection($leaveRecord);
+ public function get(LeaveRecordGetRequest $request)
+{
+    try {
+        $data = $request->all();
 
-            return response()->json($leaveRecord);
-        } catch (\Throwable $e) {
-            Utility::log("LeaveRecordController::get", $e->getMessage());
+        $query = LeaveRecord::with(['staff', 'leaves']);
 
-            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+        if (!empty($data['id'])) {
+            $query->where('id', $data['id']);
         }
+
+        if (!empty($data['staff_id'])) {
+            $query->where('staff_id', $data['staff_id']);
+        }
+
+        if (!empty($data['year'])) {
+            $query->where('year', $data['year']);
+        }
+
+        $leaveRecords = $query->get();
+
+        return response()->json(LeaveRecordResource::collection($leaveRecords), 200);
+
+    } catch (\Throwable $e) {
+        Utility::log("LeaveRecordController::get", $e->getMessage());
+
+        return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
     }
+}
 
 public function create(LeaveRecordCreateRequest $request)
     {

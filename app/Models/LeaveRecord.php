@@ -25,13 +25,14 @@ class LeaveRecord extends Model
         'deleted_at',
     ];
 
-    public function staff()
-    {
-        return $this->belongsTo(Staff::class, 'staff_id');
-    }
 
-    public function leave_records()
-    {
-        return $this->hasMany(LeaveRecord::class, 'staff_id');
-    }
+public function leaves()
+{
+    return $this->hasMany(Leave::class, 'rec_id', 'id');
+}
+
+public function staff()
+{
+    return $this->belongsTo(Staff::class, 'staff_id', 'id');
+}
 }

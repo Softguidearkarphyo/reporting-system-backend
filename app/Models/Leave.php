@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Leave extends Model
 {
+    use SoftDeletes;
 
     protected $table = 'leaves';
 
@@ -21,13 +23,13 @@ class Leave extends Model
         'deleted_at',
     ];
 
-    public function staff()
+    public function leaveRecord()
     {
-        return $this->belongsTo(Staff::class, 'staff_id');
+        return $this->belongsTo(LeaveRecord::class, 'rec_id', 'id');
     }
 
     public function leave_records()
     {
-        return $this->belongsTo(LeaveRecord::class, 'rec_id');
+        return $this->leaveRecord();
     }
 }

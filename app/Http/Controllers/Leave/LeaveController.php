@@ -17,22 +17,35 @@ use DateTime;
 
 class LeaveController extends Controller
 {
-    public function get(LeaveGetRequest $request)
-    {
-        try {
-            $data   = $request->all();
-            $query = Leave::with('staff');
-            if (!empty($data['id'])) {
-                $query->where('id', $data['id']);
-            }
-            $leaves = $query->get();
-            $leaves = LeaveResource::collection($leaves);
-            return response()->json($leaves);
-        } catch (\Throwable  $e) {
-            Utility::log("LeaveController::get", $e->getMessage());
-            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+public function get(LeaveGetRequest $request)
+{
+    try {
+        $data = $request->all();
+
+        $query = Leave::with(['leave_records.staff']);
+
+        if (!empty($data['id'])) {
+            $query->where('id', $data['id']);
         }
+
+        if (!empty($data['rec_id'])) {
+            $query->where('rec_id', $data['rec_id']);
+        }
+
+        $leaves = $query->get();
+        $leaves = LeaveResource::collection($leaves);
+
+        return response()->json($leaves);
+    } catch (\Throwable $e) {
+        Utility::log("LeaveController::get", $e->getMessage());
+        
+        return response()->json([
+            'message' => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine()
+        ], ReturnMessage::INTERNAL_SERVER_ERROR);
     }
+}
 
 public function create(LeaveCreateRequest $request)
 {
