@@ -16,11 +16,11 @@ return new class extends Migration
             $table->foreignId('staff_id')->constrained('staffs')->onDelete('cascade');
             $table->date('ot_date')->nullable();
             $table->string('ot_time')->nullable();
+            $table->tinyInteger('status')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
     }
-
     /**
      * Reverse the migrations.
      */

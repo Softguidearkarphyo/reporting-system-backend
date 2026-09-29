@@ -70,6 +70,8 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/over-time')->group(function () {
         Route::post('/get', [OverTimeController::class, 'get']);
         Route::post('/create', [OverTimeController::class, 'create']);
+        Route::post('/delete', [OverTimeController::class, 'delete']);
+        Route::post('/status-change', [OverTimeController::class, 'statusChange']);
     });
     Route::prefix('/fines')->group(function () {
         Route::post('/create', [StaffController::class, 'createFines']);
