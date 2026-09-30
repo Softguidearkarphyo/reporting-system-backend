@@ -67,18 +67,56 @@ public function create(LeaveCreateRequest $request)
             9 => 0.0625,   // 30 Minutes
         ];
 
-        $stringToDurationId = [
-            'Full Day'  => 1,
-            'Half Day'  => 2,
-            '1 Day'     => 1,
-            '0.5 Day'   => 2,
-        ];
+            $stringToDurationId = [
+                // ID 1 (1.0 Day / 8 Hours)
+                'Full Day'    => 1,
+                '1 Day'       => 1,
+                '8 Hours'     => 1,
+                '8 Hrs'       => 1,
 
+                // ID 2 (0.5 Day / 4 Hours)
+                'Half Day'    => 2,
+                '0.5 Day'     => 2,
+                '4 Hours'     => 2,
+                '4 Hrs'       => 2,
+
+                // ID 3 (0.4375 Day / 3 Hrs 30 Min)
+                '3.5 Hours'   => 3,
+                '3 Hrs 30 Min' => 3,
+
+                // ID 4 (0.375 Day / 3 Hours)
+                '3 Hours'     => 4,
+                '3 Hrs'       => 4,
+
+                // ID 5 (0.3125 Day / 2 Hrs 30 Min)
+                '2.5 Hours'   => 5,
+                '2 Hrs 30 Min' => 5,
+
+                // ID 6 (0.25 Day / 2 Hours)
+                '2 Hours'     => 6,
+                '2 Hrs'       => 6,
+
+                // ID 7 (0.1875 Day / 1 Hr 30 Min)
+                '1.5 Hours'   => 7,
+                '1 Hr 30 Min' => 7,
+
+                // ID 8 (0.125 Day / 1 Hour)
+                '1 Hour'      => 8,
+                '1 Hr'        => 8,
+
+                // ID 9 (0.0625 Day / 30 Minutes)
+                '0.5 Hour'    => 9,
+                '30 Minutes'  => 9,
+                '30 Mins'     => 9,
+            ];
         $requestedDuration = $data['duration'] ?? 1;
-        if (is_numeric($requestedDuration)) {
+        if (is_numeric($requestedDuration) && isset($durationMap[(int)$requestedDuration])) {
             $durationId = (int) $requestedDuration;
+        } elseif (isset($stringToDurationId[$requestedDuration])) {
+            $durationId = $stringToDurationId[$requestedDuration];
         } else {
-            $durationId = $stringToDurationId[$requestedDuration] ?? 1;
+            $floatVal = (float) $requestedDuration;
+            $durationId = $getDurationId($floatVal, 1); 
         }
 
         $getDurationId = function ($amount, $fallbackId) use ($durationMap) {
@@ -118,14 +156,21 @@ public function create(LeaveCreateRequest $request)
             $firstPeriodEnd   = Carbon::createFromDate($leaveYear, 6, 30)->endOfDay();
             $isFirstHalf      = ($leaveDate >= $firstPeriodStart && $leaveDate <= $firstPeriodEnd);
 
-            $availableBalance = $isFirstHalf ? $leaveRecord->first_annual : $leaveRecord->second_annual;
+            // Calculate total available balance based on period
+            if ($isFirstHalf) {
+                // In H1: Can ONLY use H1 balance
+                $availableBalance = (float) $leaveRecord->first_annual;
+            } else {
+                // In H2: Can use H2 balance + ANY rollover balance left in H1
+                $availableBalance = (float) $leaveRecord->second_annual + max(0, (float) $leaveRecord->first_annual);
+            }
 
             if ($availableBalance >= $appliedDuration) {
                 // CASE 1: Full Paid Leave
                 $paidAmount   = $appliedDuration;
                 $unpaidAmount = 0.0;
             } elseif ($availableBalance > 0) {
-                // CASE 2: Split Leave (e.g., Paid + Unpaid)
+                // CASE 2: Split Leave (Paid + Unpaid)
                 $paidAmount   = $availableBalance;
                 $unpaidAmount = $appliedDuration - $availableBalance;
             } else {
@@ -137,9 +182,17 @@ public function create(LeaveCreateRequest $request)
             // --- 1. Process Paid Portion ---
             if ($paidAmount > 0) {
                 if ($isFirstHalf) {
+                    // H1 leaves only deduct from first_annual
                     $leaveRecord->first_annual -= $paidAmount;
                 } else {
-                    $leaveRecord->second_annual -= $paidAmount;
+                    // H2 leaves: Deduct from second_annual first, then spill over into remaining first_annual
+                    if ($leaveRecord->second_annual >= $paidAmount) {
+                        $leaveRecord->second_annual -= $paidAmount;
+                    } else {
+                        $remainderToDeduct = $paidAmount - $leaveRecord->second_annual;
+                        $leaveRecord->second_annual = 0;
+                        $leaveRecord->first_annual -= $remainderToDeduct;
+                    }
                 }
 
                 $leaveRecord->total_used += $paidAmount;
