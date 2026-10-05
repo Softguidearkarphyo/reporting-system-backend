@@ -22,6 +22,7 @@ return new class extends Migration
             $table->float('second_annual')->default(0);
             $table->float('total_used')->default(0);
             $table->float('total_leaves')->default(0);
+            $table->float('accumulated_hours')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

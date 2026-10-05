@@ -20,6 +20,7 @@ class LeaveRecord extends Model
         'second_annual',
         'total_leaves',
         'total_used',
+        'accumulated_hours',
         'created_at',
         'updated_at',
         'deleted_at',

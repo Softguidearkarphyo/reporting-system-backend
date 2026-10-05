@@ -66,6 +66,7 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/leave-record')->group(function () {
         Route::post('/get', [LeaveRecordController::class, 'get']);
         Route::post('/create', [LeaveRecordController::class, 'create']);
+        Route::post('/add-short-leave', [LeaveRecordController::class, 'addShortLeave']);
     });
     Route::prefix('/over-time')->group(function () {
         Route::post('/get', [OverTimeController::class, 'get']);

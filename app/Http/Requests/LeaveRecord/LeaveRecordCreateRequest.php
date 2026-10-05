@@ -28,6 +28,7 @@ class LeaveRecordCreateRequest extends FormRequest
             'remain_leaves'  => ['nullable'],
             'total_given'    => ['nullable'],
             'total_used'     => ['nullable'],
+            'accumulated_hours' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 

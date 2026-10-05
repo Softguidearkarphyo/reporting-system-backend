@@ -10,44 +10,38 @@ use App\Models\Leave;
 use App\Models\LeaveRecord;
 use Illuminate\Support\Facades\DB;
 use App\ReturnMessage;
-use Illuminate\Http\Request;
 use App\Utility;
 use Carbon\Carbon;
-use DateTime;
 
 class LeaveController extends Controller
 {
-public function get(LeaveGetRequest $request)
-{
-    try {
-        $data = $request->all();
+    public function get(LeaveGetRequest $request)
+    {
+        try {
+            $data = $request->all();
+            $query = Leave::with(['leave_records.staff']);
 
-        $query = Leave::with(['leave_records.staff']);
+            if (!empty($data['id'])) {
+                $query->where('id', $data['id']);
+            }
 
-        if (!empty($data['id'])) {
-            $query->where('id', $data['id']);
+            if (!empty($data['rec_id'])) {
+                $query->where('rec_id', $data['rec_id']);
+            }
+
+            $leaves = $query->get();
+            return response()->json(LeaveResource::collection($leaves));
+        } catch (\Throwable $e) {
+            Utility::log("LeaveController::get", $e->getMessage());
+            return response()->json([
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine()
+            ], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
-
-        if (!empty($data['rec_id'])) {
-            $query->where('rec_id', $data['rec_id']);
-        }
-
-        $leaves = $query->get();
-        $leaves = LeaveResource::collection($leaves);
-
-        return response()->json($leaves);
-    } catch (\Throwable $e) {
-        Utility::log("LeaveController::get", $e->getMessage());
-        
-        return response()->json([
-            'message' => $e->getMessage(),
-            'file'    => $e->getFile(),
-            'line'    => $e->getLine()
-        ], ReturnMessage::INTERNAL_SERVER_ERROR);
     }
-}
 
-public function create(LeaveCreateRequest $request)
+    public function create(LeaveCreateRequest $request)
 {
     DB::beginTransaction();
 
@@ -55,6 +49,7 @@ public function create(LeaveCreateRequest $request)
         $data = $request->validated();
         $leaves = [];
 
+        // Duration mappings
         $durationMap = [
             1 => 1.0,      // Full day (8 Hours)
             2 => 0.5,      // Half day (4 Hours)
@@ -67,57 +62,17 @@ public function create(LeaveCreateRequest $request)
             9 => 0.0625,   // 30 Minutes
         ];
 
-            $stringToDurationId = [
-                // ID 1 (1.0 Day / 8 Hours)
-                'Full Day'    => 1,
-                '1 Day'       => 1,
-                '8 Hours'     => 1,
-                '8 Hrs'       => 1,
-
-                // ID 2 (0.5 Day / 4 Hours)
-                'Half Day'    => 2,
-                '0.5 Day'     => 2,
-                '4 Hours'     => 2,
-                '4 Hrs'       => 2,
-
-                // ID 3 (0.4375 Day / 3 Hrs 30 Min)
-                '3.5 Hours'   => 3,
-                '3 Hrs 30 Min' => 3,
-
-                // ID 4 (0.375 Day / 3 Hours)
-                '3 Hours'     => 4,
-                '3 Hrs'       => 4,
-
-                // ID 5 (0.3125 Day / 2 Hrs 30 Min)
-                '2.5 Hours'   => 5,
-                '2 Hrs 30 Min' => 5,
-
-                // ID 6 (0.25 Day / 2 Hours)
-                '2 Hours'     => 6,
-                '2 Hrs'       => 6,
-
-                // ID 7 (0.1875 Day / 1 Hr 30 Min)
-                '1.5 Hours'   => 7,
-                '1 Hr 30 Min' => 7,
-
-                // ID 8 (0.125 Day / 1 Hour)
-                '1 Hour'      => 8,
-                '1 Hr'        => 8,
-
-                // ID 9 (0.0625 Day / 30 Minutes)
-                '0.5 Hour'    => 9,
-                '30 Minutes'  => 9,
-                '30 Mins'     => 9,
-            ];
-        $requestedDuration = $data['duration'] ?? 1;
-        if (is_numeric($requestedDuration) && isset($durationMap[(int)$requestedDuration])) {
-            $durationId = (int) $requestedDuration;
-        } elseif (isset($stringToDurationId[$requestedDuration])) {
-            $durationId = $stringToDurationId[$requestedDuration];
-        } else {
-            $floatVal = (float) $requestedDuration;
-            $durationId = $getDurationId($floatVal, 1); 
-        }
+        $stringToDurationId = [
+            'Full Day' => 1, '1 Day' => 1, '8 Hours' => 1, '8 Hrs' => 1,
+            'Half Day' => 2, '0.5 Day' => 2, '4 Hours' => 2, '4 Hrs' => 2,
+            '3.5 Hours' => 3, '3 Hrs 30 Min' => 3,
+            '3 Hours' => 4, '3 Hrs' => 4,
+            '2.5 Hours' => 5, '2 Hrs 30 Min' => 5,
+            '2 Hours' => 6, '2 Hrs' => 6,
+            '1.5 Hours' => 7, '1 Hr 30 Min' => 7,
+            '1 Hour' => 8, '1 Hr' => 8,
+            '0.5 Hour' => 9, '30 Minutes' => 9, '30 Mins' => 9,
+        ];
 
         $getDurationId = function ($amount, $fallbackId) use ($durationMap) {
             foreach ($durationMap as $id => $val) {
@@ -127,6 +82,16 @@ public function create(LeaveCreateRequest $request)
             }
             return $fallbackId;
         };
+
+        $requestedDuration = $data['duration'] ?? 1;
+        if (is_numeric($requestedDuration) && isset($durationMap[(int)$requestedDuration])) {
+            $durationId = (int) $requestedDuration;
+        } elseif (isset($stringToDurationId[$requestedDuration])) {
+            $durationId = $stringToDurationId[$requestedDuration];
+        } else {
+            $floatVal = (float) $requestedDuration;
+            $durationId = $getDurationId($floatVal, 1);
+        }
 
         $datesToProcess = [];
         if (!empty($data['multi_date']) && is_array($data['multi_date'])) {
@@ -146,6 +111,7 @@ public function create(LeaveCreateRequest $request)
 
             $leaveRecord = LeaveRecord::where('staff_id', $data['staff_id'])
                 ->where('year', $leaveYear)
+                ->lockForUpdate()
                 ->first();
 
             if (!$leaveRecord) {
@@ -156,47 +122,79 @@ public function create(LeaveCreateRequest $request)
             $firstPeriodEnd   = Carbon::createFromDate($leaveYear, 6, 30)->endOfDay();
             $isFirstHalf      = ($leaveDate >= $firstPeriodStart && $leaveDate <= $firstPeriodEnd);
 
-            // Calculate total available balance based on period
+            $carryLeaves = max(0, (float) $leaveRecord->carry_leaves);
+            $firstAnnual = max(0, (float) $leaveRecord->first_annual);
+            $secondAnnual = max(0, (float) $leaveRecord->second_annual);
+
+            // Calculate total available balance including carry leaves
             if ($isFirstHalf) {
-                // In H1: Can ONLY use H1 balance
-                $availableBalance = (float) $leaveRecord->first_annual;
+                $availableBalance = $carryLeaves + $firstAnnual;
             } else {
-                // In H2: Can use H2 balance + ANY rollover balance left in H1
-                $availableBalance = (float) $leaveRecord->second_annual + max(0, (float) $leaveRecord->first_annual);
+                $availableBalance = $carryLeaves + $secondAnnual + $firstAnnual;
             }
 
             if ($availableBalance >= $appliedDuration) {
-                // CASE 1: Full Paid Leave
                 $paidAmount   = $appliedDuration;
                 $unpaidAmount = 0.0;
             } elseif ($availableBalance > 0) {
-                // CASE 2: Split Leave (Paid + Unpaid)
                 $paidAmount   = $availableBalance;
                 $unpaidAmount = $appliedDuration - $availableBalance;
             } else {
-                // CASE 3: Full Unpaid Leave
                 $paidAmount   = 0.0;
                 $unpaidAmount = $appliedDuration;
             }
 
-            // --- 1. Process Paid Portion ---
+            // Deduct Paid Portion with Priority: Carry Leaves -> Second Annual -> First Annual
             if ($paidAmount > 0) {
-                if ($isFirstHalf) {
-                    // H1 leaves only deduct from first_annual
-                    $leaveRecord->first_annual -= $paidAmount;
-                } else {
-                    // H2 leaves: Deduct from second_annual first, then spill over into remaining first_annual
-                    if ($leaveRecord->second_annual >= $paidAmount) {
-                        $leaveRecord->second_annual -= $paidAmount;
+                $remainingToDeduct = $paidAmount;
+
+                // 1. Deduct from Carry Leaves first
+                if ($leaveRecord->carry_leaves > 0) {
+                    $deductCarry = min($leaveRecord->carry_leaves, $remainingToDeduct);
+                    $leaveRecord->carry_leaves -= $deductCarry;
+                    $remainingToDeduct -= $deductCarry;
+                }
+
+                // 2. Deduct remaining from Annual Leaves
+                if ($remainingToDeduct > 0) {
+                    if ($isFirstHalf) {
+                        $leaveRecord->first_annual = max(0, (float) $leaveRecord->first_annual - $remainingToDeduct);
                     } else {
-                        $remainderToDeduct = $paidAmount - $leaveRecord->second_annual;
-                        $leaveRecord->second_annual = 0;
-                        $leaveRecord->first_annual -= $remainderToDeduct;
+                        // In second half, consume second_annual first, then fallback to first_annual
+                        if ($leaveRecord->second_annual >= $remainingToDeduct) {
+                            $leaveRecord->second_annual -= $remainingToDeduct;
+                        } else {
+                            $remainder = $remainingToDeduct - $leaveRecord->second_annual;
+                            $leaveRecord->second_annual = 0;
+                            $leaveRecord->first_annual = max(0, (float) $leaveRecord->first_annual - $remainder);
+                        }
                     }
                 }
 
+                // Update totals and remain_leaves
                 $leaveRecord->total_used += $paidAmount;
-                $leaveRecord->remain_leaves = $leaveRecord->first_annual + $leaveRecord->second_annual;
+                $leaveRecord->remain_leaves = max(
+                    0,
+                    (float) $leaveRecord->carry_leaves + (float) $leaveRecord->first_annual + (float) $leaveRecord->second_annual
+                );
+
+                // If balance is depleted, convert active short leaves to unpaid
+                if ($leaveRecord->remain_leaves <= 0) {
+                    $leaveRecord->remain_leaves = 0;
+                    $leaveRecord->accumulated_hours = 0.0;
+
+                    $existingShortLeaves = $leaveRecord->leaves()->where('leave_type', 3)->get();
+                    foreach ($existingShortLeaves as $sl) {
+                        $durInt = (int) $sl->duration;
+                        $dayCountVal = $durationMap[$durInt] ?? 0.0625;
+                        $sl->update([
+                            'leave_type' => 0, // Unpaid
+                            'day_count'  => $dayCountVal,
+                            'reason'     => ($sl->reason ? $sl->reason . ' ' : '') . '(Converted to Unpaid - Leave balance depleted)',
+                        ]);
+                    }
+                }
+
                 $leaveRecord->save();
 
                 $paidDurationId = $getDurationId($paidAmount, $durationId);
@@ -204,7 +202,7 @@ public function create(LeaveCreateRequest $request)
                 $paidLeave = Leave::create([
                     "rec_id"     => $leaveRecord->id,
                     "leave_date" => $leaveDate->format('Y-m-d'),
-                    "duration"   => $paidDurationId,
+                    "duration"   => (string) $paidDurationId,
                     "reason"     => $data['reason'] ?? null,
                     "day_count"  => $paidAmount,
                     "leave_type" => 1, // Paid
@@ -212,13 +210,32 @@ public function create(LeaveCreateRequest $request)
                 $leaves[] = new LeaveResource($paidLeave);
             }
 
+            // Process Unpaid Portion
             if ($unpaidAmount > 0) {
+                if ($leaveRecord->remain_leaves <= 0) {
+                    $leaveRecord->remain_leaves = 0;
+                    $leaveRecord->accumulated_hours = 0.0;
+
+                    $existingShortLeaves = $leaveRecord->leaves()->where('leave_type', 3)->get();
+                    foreach ($existingShortLeaves as $sl) {
+                        $durInt = (int) $sl->duration;
+                        $dayCountVal = $durationMap[$durInt] ?? 0.0625;
+                        $sl->update([
+                            'leave_type' => 0, // Unpaid
+                            'day_count'  => $dayCountVal,
+                            'reason'     => ($sl->reason ? $sl->reason . ' ' : '') . '(Converted to Unpaid - Leave balance depleted)',
+                        ]);
+                    }
+
+                    $leaveRecord->save();
+                }
+
                 $unpaidDurationId = $getDurationId($unpaidAmount, $durationId);
 
                 $unpaidLeave = Leave::create([
                     "rec_id"     => $leaveRecord->id,
                     "leave_date" => $leaveDate->format('Y-m-d'),
-                    "duration"   => $unpaidDurationId,
+                    "duration"   => (string) $unpaidDurationId,
                     "reason"     => $data['reason'] ?? null,
                     "day_count"  => $unpaidAmount,
                     "leave_type" => 0, // Unpaid

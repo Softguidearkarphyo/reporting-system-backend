@@ -3,46 +3,119 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use App\Models\LeaveRecord;
-use App\Utility;
+use App\Models\Leave;
+use App\Models\Staff;
 
 class UpdateYearlyLeaves extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'leaves:update';
+    protected $signature = 'leaves:update {target_year?}';
+    protected $description = 'Carry over remaining leaves, archive previous year records, and initialize new year';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
-
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
-        Log::info('Scheduler ping worked: ' . now());
-        $yearEnd = Carbon::create(now()->year, 12, 31)->endOfDay();
+        $currentYear = (int) ($this->argument('target_year') ?? now()->year);
+        $previousYear = $currentYear - 1;
 
-        LeaveRecord::whereDate('permanent_date', '<=', $yearEnd)
-            ->whereHas('staff', function ($query) {
-                $query->whereNull('deleted_at');
-            })
-            ->get()
-            ->each(function ($leave) {
-                $leave->carry_leaves += 10;
-            });
+        $this->info("Checking leave records for Year: {$currentYear} (Archiving: {$previousYear})...");
+        Log::info("Leave rollover check started for year: {$currentYear}");
 
-        $this->info('Leave updated!');
-        Utility::log('UpdateYearlyLeaves command running at ' . now(), 'info');
-        return self::SUCCESS;
+        DB::beginTransaction();
+        try {
+            $staffs = Staff::whereNull('deleted_at')->get();
+
+            if ($staffs->isEmpty()) {
+                $this->warn("No active staff found.");
+                return self::SUCCESS;
+            }
+
+            $createdCount = 0;
+            $archivedRecordIds = [];
+
+            foreach ($staffs as $staff) {
+                // check current year record exists
+                // $alreadyExists = LeaveRecord::where('staff_id', $staff->id)
+                //     ->where('year', $currentYear)
+                //     ->exists();
+                
+                $alreadyExists = LeaveRecord::withTrashed()
+                ->where('staff_id', $staff->id)
+                ->where('year', $currentYear)
+                ->exists();
+
+                if ($alreadyExists) {
+                    continue;
+                }
+
+                // find previous year record to carry over remaining leaves
+                $oldRecord = LeaveRecord::where('staff_id', $staff->id)
+                    ->where('year', $previousYear)
+                    ->first();
+
+                $carryOverDays = 0.0;
+
+                if ($oldRecord) {
+                    $carryOverDays = max(0, (float) $oldRecord->remain_leaves);
+                    $archivedRecordIds[] = $oldRecord->id;
+
+                    
+                    $oldRecord->delete();
+                }
+
+                
+                $firstAnnual = 5.0;
+                $secondAnnual = 5.0;
+                $newTotalLeaves = 10.0 + $carryOverDays;
+                $newRemainLeaves = $newTotalLeaves;
+
+                LeaveRecord::create([
+                    'staff_id'          => $staff->id,
+                    'year'              => $currentYear,
+                    'permanent_date'    => $staff->permanent_date ?? now()->toDateString(),
+                    'carry_leaves'      => $carryOverDays,
+                    'remain_leaves'     => $newRemainLeaves,
+                    'first_annual'      => $firstAnnual,
+                    'second_annual'     => $secondAnnual,
+                    'total_used'        => 0.0,
+                    'total_leaves'      => $newTotalLeaves,
+                    'accumulated_hours' => 0.0,
+                ]);
+
+                $createdCount++;
+            }
+
+            // softdelete archived records
+            if (!empty($archivedRecordIds)) {
+                $affectedLeaves = Leave::whereIn('rec_id', $archivedRecordIds)
+                    ->whereNull('deleted_at')
+                    ->update(['deleted_at' => now()]);
+
+                $this->info("Soft deleted {$affectedLeaves} leave request(s) from year {$previousYear}.");
+            }
+
+            DB::commit();
+
+            if ($createdCount > 0) {
+                $this->info("Successfully archived {$previousYear} and created {$createdCount} new records for {$currentYear}.");
+                Log::info("Archived {$previousYear} and created {$createdCount} records for {$currentYear}.");
+            } else {
+                $this->line("All staff already have records for {$currentYear}. Skipped.");
+            }
+
+            return self::SUCCESS;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            $this->error("Failed to rollover leaves: " . $e->getMessage());
+            Log::error("Leave rollover exception: " . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return self::FAILURE;
+        }
     }
 }
