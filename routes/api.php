@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Task\TaskController;
 use App\Http\Controllers\Leave\LeaveController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Reporting\ReportingController;
 use App\Http\Controllers\SkillSheet\SkillSheetController;
 use App\Http\Controllers\LeaveRecord\LeaveRecordController;
 use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
+use App\Http\Controllers\Tutorial\TutorialController;
 use App\Http\Controllers\TaskPerformanceSetting\TaskPerformanceSettingController;
 
 
@@ -80,6 +82,13 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     Route::prefix('/men-power')->group(function () {
         Route::post('/get', [MenPowerController::class, 'get']);
     });
+    Route::prefix('/tutorial')->group(function () {
+        Route::post('/get', [TutorialController::class, 'get']);
+        Route::post('/create', [TutorialController::class, 'create']);
+         Route::post('/update', [TutorialController::class, 'update']);
+        Route::post('/delete', [TutorialController::class, 'delete']);
+    });
+
 });
 
 Route::get('/user', [AuthController::class, 'user']);
