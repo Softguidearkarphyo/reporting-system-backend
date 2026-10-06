@@ -40,6 +40,7 @@ class LeaveResource extends JsonResource
             'second_annual'  => $this->leave_records?->second_annual ?? 0,
             'total_used'     => $this->leave_records?->total_used ?? 0,
             'total_leaves'   => $this->leave_records?->total_leaves ?? 0,
+            'accumulated_hours'   => $this->leave_records?->accumulated_hours ?? 0,
         ],
 
         // Timestamps

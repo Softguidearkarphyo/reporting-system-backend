@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\Attendance;
 
-use App\Utility;
-use App\ReturnMessage;
 use App\Models\Staff;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
@@ -13,10 +11,23 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    
+    private const OFFICE_LATITUDE  = 16.8304335;
+    private const OFFICE_LONGITUDE = 96.1319546;
+    private const ALLOWED_RADIUS_METERS = 400; 
+
+    private array $allowedIps = [
+        '127.0.0.1',      // Local Testing
+        '172.20.0.1',
+        // '192.168.1.1',    // Local Office Wi-Fi
+        '103.xxx.xxx.xxx' // office Static Public IP 
+    ];
+
     public function checkIn(Request $request)
     {
+       
         try {
-            // 1. Validation စစ်ခြင်း
+            // 1. Form Input Validation
             $validator = \Validator::make($request->all(), [
                 'staff_id'  => 'required|exists:staffs,id',
                 'latitude'  => 'required|numeric',
@@ -30,10 +41,36 @@ class AttendanceController extends Controller
                 ], 422);
             }
 
+            $clientIp = $request->ip();
+            $userLat  = (float) $request->latitude;
+            $userLng  = (float) $request->longitude;
+
+            if (!in_array($clientIp, $this->allowedIps) ) {
+                return response()->json([
+                    'status'  => 'fail',
+                    'message' => "ရုံး Wi-Fi / IP ($clientIp) ဖြင့်သာ Check-in ပြုလုပ်ခွင့်ရှိပါသည်။",
+                ], 403);
+            }
+
+            // 3. 📍 GPS Geofencing (Distance Calculation) စစ်ဆေးခြင်း
+            $distanceInMeters = $this->calculateDistance(
+                self::OFFICE_LATITUDE,
+                self::OFFICE_LONGITUDE,
+                $userLat,
+                $userLng
+            );
+
+            if ($distanceInMeters > self::ALLOWED_RADIUS_METERS) {
+                $formattedDistance = round($distanceInMeters);
+                return response()->json([
+                    'status'  => 'fail',
+                    'message' => "သင်သည် ရုံးနှင့် မီတာ {$formattedDistance} ကွာဝေးနေသဖြင့် Check-in ဝင်၍မရပါ။ (ခွင့်ပြုချက်: မီတာ " . self::ALLOWED_RADIUS_METERS . " အတွင်း)",
+                ], 400);
+            }
+
             $today = now()->toDateString();
             $currentTime = now()->toTimeString();
 
-            // 2. ယနေ့အတွက် Check-in ပြုလုပ်ပြီးပါက ထပ်မံပြုလုပ်ခွင့် မပေးခြင်း
             $alreadyCheckedIn = Attendance::where('staff_id', $request->staff_id)
                 ->where('date', $today)
                 ->exists();
@@ -45,19 +82,17 @@ class AttendanceController extends Controller
                 ], 400);
             }
 
-            // 3. Attendance DB Record သိမ်းဆည်းခြင်း
             $attendance = Attendance::create([
                 'staff_id'      => $request->staff_id,
                 'date'          => $today,
                 'check_in_time' => $currentTime,
-                'ip_address'    => $request->ip(),
-                'latitude'      => $request->latitude,
-                'longitude'     => $request->longitude,
+                'ip_address'    => $clientIp,
+                'latitude'      => $userLat,
+                'longitude'     => $userLng,
             ]);
 
-            // 4. ဝန်ထမ်းအမည် ရယူခြင်းနှင့် Telegram Notification ပို့ခြင်း
             $staff = Staff::find($request->staff_id);
-            $staffName = $staff->name ?? 'Staff Member';
+            $staffName = $staff->eng_name ?? $staff->name ?? 'Staff Member';
             $formattedTime = Carbon::parse($currentTime)->format('h:i A');
 
             $notified = TelegramService::sendMorningNotification($staffName, $formattedTime);
@@ -68,7 +103,7 @@ class AttendanceController extends Controller
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Attendance check-in အောင်မြင်ပါသည်။',
+                'message' => 'Attendance Check-in အောင်မြင်ပါသည်။',
                 'data'    => $attendance,
             ], 200);
 
@@ -80,5 +115,24 @@ class AttendanceController extends Controller
                 'message' => 'Something went wrong on the server.',
             ], 500);
         }
+    }
+
+    /**
+     * Haversine Formula သုံး၍ တည်နေရာနှစ်ခုကြားရှိ မီတာအကွာအဝေးကို တွက်ချက်ပေးသည့် Function
+     */
+    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371000; // Earth radius in meters
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lonDelta = deg2rad($lon2 - $lon1);
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c; // Returns distance in meters
     }
 }
