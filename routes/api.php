@@ -14,6 +14,7 @@ use App\Http\Controllers\SkillSheet\SkillSheetController;
 use App\Http\Controllers\LeaveRecord\LeaveRecordController;
 use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
 use App\Http\Controllers\TaskPerformanceSetting\TaskPerformanceSettingController;
+use App\Http\Controllers\Attendance\AttendanceController;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -82,6 +83,9 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     });
     Route::prefix('/men-power')->group(function () {
         Route::post('/get', [MenPowerController::class, 'get']);
+    });
+    Route::prefix('/attendance')->group(function () {
+        Route::post('/check-in', [AttendanceController::class, 'checkIn']);
     });
 });
 

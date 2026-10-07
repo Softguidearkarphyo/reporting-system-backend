@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\TelegramService;
 
-class TestTelegramBot extends Command
+class TelegramBot extends Command
 {
     protected $signature = 'telegram:test';
     protected $description = 'Test Telegram Bot Notification';
