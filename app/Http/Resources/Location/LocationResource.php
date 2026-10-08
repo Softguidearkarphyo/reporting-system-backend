@@ -25,6 +25,8 @@ class LocationResource extends JsonResource
                 isset($data['staff']),
                 new StaffResource($this->staff),
             ),
+            'allow_meter'   => $this->allow_meter,
+            'device_uuid'   => $this->device_uuid,
             'created_at'    => $this->created_at,
             'updated_at'    => $this->updated_at,
             'deleted_at'    => $this->deleted_at,

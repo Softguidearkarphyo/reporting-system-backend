@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('ref_ph_number', 100)->nullable();
             $table->string('staff_image', 100)->nullable();
             $table->unsignedTinyInteger('sort_key')->nullable();
+            $table->unsignedTinyInteger('work_type')->nullable();
             $table->timestamps();
             $table->softDeletes()->nullable();
         });

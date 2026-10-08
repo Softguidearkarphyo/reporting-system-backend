@@ -39,6 +39,7 @@ class StaffUpdateRequest extends FormRequest
             // 'project'         => ['nullable', 'array'],
             // 'project.*'       => ['integer'],
             'sort_key'        => ['nullable', 'integer', 'between:0,255'],
+            'work_type'       => ['nullable', 'integer', 'between:0,255'],
         ];
     }
 }

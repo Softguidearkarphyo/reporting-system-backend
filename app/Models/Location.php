@@ -23,6 +23,8 @@ class Location extends Model
         'staff_id',
         'lat',
         'lon',
+        'allow_meter',
+        'device_uuid',
         'created_at',
         'updated_at',
         'deleted_at',

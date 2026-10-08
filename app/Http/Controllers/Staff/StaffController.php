@@ -68,8 +68,13 @@ class StaffController extends Controller
                 "ref_person"        => $data['ref_person'] ?? null,
                 "ref_ph_number"     => $data['ref_ph_number'] ?? null,
                 "sort_key"          => $data['sort_key'] ?? null,
+                "work_type"         => $data['work_type'] ?? null,
                 "staff_image"       => $fileName ?? null,
             ];
+            //  return response()->json([
+            //         'status'  => 'success',
+            //         'message' => $createData,
+            //     ], 200);
             $staff = new StaffResource(Staff::create($createData));
             if (!empty($data['project']) && is_array($data['project'])) {
                 $insertData = [];
@@ -128,6 +133,7 @@ public function update(StaffUpdateRequest $request)
             "ref_ph_number"     => $data['ref_ph_number'] ?? null,
             "sort_key"          => $data['sort_key'] ?? null,
             "staff_image"       => $fileName ?? null,
+            "work_type"         => $data['work_type'] ?? null,
         ];
 
         if (!$hasLeaveRecord) {

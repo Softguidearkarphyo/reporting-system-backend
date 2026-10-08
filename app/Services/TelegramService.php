@@ -1,34 +1,66 @@
 <?php
+
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class TelegramService
 {
-    /**
-     * Send Morning Attendance Check-in Notification
-     *
-     * @param string $staffName
-     * @param string $checkInTime
-     * @param string|null $customChatId
-     * @return bool
-     */
+    // /**
+    //  * Send Morning Attendance Check-in Notification
+    //  *
+    //  * @param string $staffName
+    //  * @param string $checkInTime
+    //  * @param string|null $customChatId
+    //  * @return bool
+    //  */
     public static function sendMorningNotification(string $staffName, string $checkInTime, ?string $customChatId = null): bool
     {
-        $token = config('services.telegram.bot_token') ?? env('TELEGRAM_BOT_TOKEN');
-        $chatId = $customChatId ?? config('services.telegram.chat_id') ?? env('TELEGRAM_CHAT_ID');
+        $token  = env('TELEGRAM_BOT_TOKEN');
+        $chatId = $customChatId ?? env('TELEGRAM_CHAT_ID');
 
         if (!$token || !$chatId) {
             Log::error('Telegram Notification Failed: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.');
             return false;
         }
 
-        // HTML Format ဖြင့် လှပစွာ ပြင်ဆင်ထားသော စာတို
-        $message = "☀️ <b>Good Morning! Attendance Check-in</b>\n\n"
-                 . "👤 <b>ဝန်ထမ်းအမည်:</b> {$staffName}\n"
-                 . "⏰ <b>ရောက်ရှိချိန်:</b> {$checkInTime}\n"
-                 . "🏢 <b>Status:</b> Arrived at Office (ရုံးသို့ ရောက်ရှိပါပြီ)";
+        // Parse Check-in time
+        $time = Carbon::parse($checkInTime);
+        $officialStartTime = $time->copy()->setTime(8, 30, 0);
+
+        // Check if late (after 08:30 AM)
+        if ($time->greaterThan($officialStartTime)) {
+            $diffInMinutes = $officialStartTime->diffInMinutes($time);
+            $hours   = floor($diffInMinutes / 60);
+            $minutes = $diffInMinutes % 60;
+
+            $lateString = '';
+            if ($hours > 0) {
+                $lateString .= "{$hours} hr ";
+            }
+            $lateString .= "{$minutes} mins";
+
+            $statusText = "⚠️ Late ({$lateString})";
+        } else {
+            $statusText = "✅ On Time";
+        }
+
+        // Clean & Compact Telegram Message Layout
+        $formattedTime = $time->format('h:i A');
+        $namePadded   = str_pad($staffName, 12);
+        $timePadded   = str_pad($formattedTime, 12);
+        $statusPadded = str_pad($statusText, 12);
+
+     $message = "<b>MORNING ATTENDANCE</b>\n"
+         . "━━━━━━━━━━━━━━━━━━━━━━━\n"
+         . "<code>"
+         . "Name   : {$staffName}\n"
+         . "Time   : {$formattedTime}\n"
+         . "Status : {$statusText}\n"
+         . "</code>";
+
 
         try {
             $response = Http::post("https://api.telegram.org/bot{$token}/sendMessage", [

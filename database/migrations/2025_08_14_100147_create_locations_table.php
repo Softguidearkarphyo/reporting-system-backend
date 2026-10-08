@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('staff_id')->unique()->constrained('staffs')->onDelete('cascade');
             $table->decimal('lat', 10, 7)->nullable();
             $table->decimal('lon', 10, 7)->nullable();
+            $table->unsignedInteger('allow_meter')->nullable();
+            $table->string('device_uuid', 255)->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

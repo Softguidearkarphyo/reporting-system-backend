@@ -56,7 +56,7 @@ class StaffResource extends JsonResource
             'permanent_date'    => $this->permanent_date,
             'ref_person'        => $this->ref_person,
             'ref_ph_number'     => $this->ref_ph_number,
-            'sort_key'          => $this->sort_key,
+            'work_type'         => $this->work_type,
             'task_performance'  => $this->when(
                 isset($data['task_performance']),
                 TaskPerformanceResource::collection($this->taskPerformance),

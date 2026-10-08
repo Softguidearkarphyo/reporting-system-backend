@@ -20,6 +20,8 @@ class LocationSeeder extends Seeder
                 'staff_id' => $i,
                 'lat'      => $lat,
                 'lon'      => $lon,
+                'allow_meter' => 400,
+                // 'device_uuid' => NUll,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

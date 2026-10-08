@@ -40,6 +40,7 @@ class Staff extends Model
         'project',
         'sort_key',
         'staff_image',
+        'work_type',
         'created_at',
         'updated_at',
         'deleted_at',

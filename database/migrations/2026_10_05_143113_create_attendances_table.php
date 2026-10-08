@@ -20,7 +20,12 @@ return new class extends Migration
         $table->decimal('latitude', 10, 7)->nullable();
         $table->decimal('longitude', 10, 7)->nullable();
         $table->boolean('telegram_notified')->default(false);
+        $table->decimal('accuracy', 8, 2)->nullable();
+        $table->boolean('is_laptop')->default(false);
+        $table->string('device_type', 20)->default('desktop'); 
+        $table->string('device_uuid', 255)->nullable();
         $table->timestamps();
+        $table->softDeletes();
     });
 }
 

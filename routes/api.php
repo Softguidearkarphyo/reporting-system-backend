@@ -15,6 +15,7 @@ use App\Http\Controllers\LeaveRecord\LeaveRecordController;
 use App\Http\Controllers\TaskPerformance\TaskPerformanceController;
 use App\Http\Controllers\TaskPerformanceSetting\TaskPerformanceSettingController;
 use App\Http\Controllers\Attendance\AttendanceController;
+use App\Http\Controllers\Location\LocationController;
 
 
 Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function () {
@@ -86,6 +87,13 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
     });
     Route::prefix('/attendance')->group(function () {
         Route::post('/check-in', [AttendanceController::class, 'checkIn']);
+        Route::post('/list', [AttendanceController::class, 'getAttendances']);
+        Route::post('/delete', [AttendanceController::class, 'deleteAttendance']);
+    });
+    Route::prefix('/location')->group(function () {
+        Route::post('/remote-location', [LocationController::class, 'getRemoteStaffs']);
+        Route::post('/save-location', [LocationController::class, 'saveLocation']);
+        Route::post('/delete', [LocationController::class, 'deleteLocation']);
     });
 });
 
