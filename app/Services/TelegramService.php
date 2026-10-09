@@ -53,12 +53,12 @@ class TelegramService
         $timePadded   = str_pad($formattedTime, 12);
         $statusPadded = str_pad($statusText, 12);
 
-     $message = "<b>MORNING ATTENDANCE</b>\n"
-         . "━━━━━━━━━━━━━━━━━━━━━━━\n"
-         . "<code>"
-         . "Name   : {$staffName}\n"
-         . "Time   : {$formattedTime}\n"
-         . "Status : {$statusText}\n"
+     $message = "<b>MORNING </b>\n"
+     . "<code>"
+     . "Name   : {$staffName}\n"
+     . "Time   : {$formattedTime}\n"
+     . "Status : {$statusText}\n"
+     . "━━━━━━━━━━━━━━━━━━━━━━━\n"
          . "</code>";
 
 
