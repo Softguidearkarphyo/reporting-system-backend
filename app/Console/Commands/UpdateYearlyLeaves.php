@@ -8,11 +8,12 @@ use Illuminate\Support\Facades\Log;
 use App\Models\LeaveRecord;
 use App\Models\Leave;
 use App\Models\Staff;
+use App\Models\Attendance; 
 
 class UpdateYearlyLeaves extends Command
 {
     protected $signature = 'leaves:update {target_year?}';
-    protected $description = 'Carry over remaining leaves, archive previous year records, and initialize new year';
+    protected $description = 'Carry over remaining leaves, archive previous year records, hard delete attendances, and initialize new year';
 
     public function handle(): int
     {
@@ -36,14 +37,10 @@ class UpdateYearlyLeaves extends Command
 
             foreach ($staffs as $staff) {
                 // check current year record exists
-                // $alreadyExists = LeaveRecord::where('staff_id', $staff->id)
-                //     ->where('year', $currentYear)
-                //     ->exists();
-                
                 $alreadyExists = LeaveRecord::withTrashed()
-                ->where('staff_id', $staff->id)
-                ->where('year', $currentYear)
-                ->exists();
+                    ->where('staff_id', $staff->id)
+                    ->where('year', $currentYear)
+                    ->exists();
 
                 if ($alreadyExists) {
                     continue;
@@ -60,11 +57,9 @@ class UpdateYearlyLeaves extends Command
                     $carryOverDays = max(0, (float) $oldRecord->remain_leaves);
                     $archivedRecordIds[] = $oldRecord->id;
 
-                    
                     $oldRecord->delete();
                 }
 
-                
                 $firstAnnual = 5.0;
                 $secondAnnual = 5.0;
                 $newTotalLeaves = 10.0 + $carryOverDays;
@@ -85,6 +80,15 @@ class UpdateYearlyLeaves extends Command
 
                 $createdCount++;
             }
+
+        
+            $deletedAttendances = Attendance::withTrashed()
+                ->whereYear('date', '<', $currentYear)
+                ->forceDelete();
+
+            $this->info("Hard deleted {$deletedAttendances} attendance record(s) from previous years.");
+            Log::info("Hard deleted {$deletedAttendances} attendance record(s) for year transition to {$currentYear}.");
+            
 
             // softdelete archived records
             if (!empty($archivedRecordIds)) {

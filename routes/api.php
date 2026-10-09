@@ -91,7 +91,7 @@ Route::prefix('reporting-system')->middleware('auth:sanctum')->group(function ()
         Route::post('/delete', [AttendanceController::class, 'deleteAttendance']);
     });
     Route::prefix('/location')->group(function () {
-        Route::post('/remote-location', [LocationController::class, 'getRemoteStaffs']);
+        Route::post('/staff-location', [LocationController::class, 'getLocationStaffs']);
         Route::post('/save-location', [LocationController::class, 'saveLocation']);
         Route::post('/delete', [LocationController::class, 'deleteLocation']);
     });

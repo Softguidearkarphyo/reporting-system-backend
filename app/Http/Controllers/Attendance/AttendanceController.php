@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Location;
 use App\Models\Staff;
+use App\Models\StaffFine; 
 use App\Services\TelegramService;
+use DateTime;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,17 +21,21 @@ class AttendanceController extends Controller
     private const OFFICE_LONGITUDE = 96.1319415;
     private const DEFAULT_OFFICE_RADIUS = 400;
 
-    private array $allowedIps = [
-        '127.0.0.1',
-        '::1',
-        '172.19.0.0/16',
-        '172.20.0.0/16',
-        '103.xxx.xxx.xxx',
-    ];
+    private function getAllowedIps(): array
+    {
+        $rawIps = config('app.allowed_ips', env('ALLOWED_IPS', ''));
+        
+        if (is_array($rawIps)) {
+            return $rawIps;
+        }
 
-   public function checkIn(Request $request)
-{
-    try {
+        return array_filter(
+            array_map('trim', explode(',', (string) $rawIps))
+        );
+    }
+
+    public function checkIn(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'staff_id'    => 'required|exists:staffs,id',
             'latitude'    => 'nullable|numeric',
@@ -56,7 +62,7 @@ class AttendanceController extends Controller
         if ($existingAttendance) {
             return response()->json([
                 'status'  => 'fail',
-                'message' => 'Already checkin for today. You cannot check in again.',
+                'message' => 'Already checkin for today.',
             ], 400);
         }
 
@@ -94,41 +100,18 @@ class AttendanceController extends Controller
             if (!$isOfficeIp) {
                 return response()->json([
                     'status'  => 'fail',
-                    'message' => "Onsite employees are only allowed to check in from the office IP ($clientIp).",
+                    'message' => "Onsite employees are only allowed to check in from the office IP.",
                 ], 403);
             }
 
             $location = Location::withTrashed()->where('staff_id', $staff->id)->first();
 
-            // Device UUID Registration & Verification
-            if ($requestDeviceUuid) {
-                if (!$location) {
-                    try {
-                        $location = Location::firstOrCreate(
-                            ['staff_id' => $staff->id],
-                            [
-                                'lat'         => $userLat,
-                                'lon'         => $userLng,
-                                'allow_meter' => 400,
-                                'device_uuid' => $requestDeviceUuid,
-                            ]
-                        );
-                    } catch (\Illuminate\Database\QueryException $e) {
-                        $location = Location::withTrashed()->where('staff_id', $staff->id)->first();
-                    }
-                }
-
-                if (empty($location->device_uuid)) {
-                    $location->update([
-                        'device_uuid' => $requestDeviceUuid,
-                    ]);
-                } else {
-                    if ($location->device_uuid !== $requestDeviceUuid) {
-                        return response()->json([
-                            'status'  => 'fail',
-                            'message' => 'The device you are using is not registered. Please register your device first.',
-                        ], 403);
-                    }
+            if ($requestDeviceUuid && $location && !empty($location->device_uuid)) {
+                if ($location->device_uuid !== $requestDeviceUuid) {
+                    return response()->json([
+                        'status'  => 'fail',
+                        'message' => 'The device you are using is not registered.',
+                    ], 403);
                 }
             }
         }
@@ -149,109 +132,181 @@ class AttendanceController extends Controller
                 ], 400);
             }
 
-            // Retrieve staff's remote location configuration
             $location = Location::withTrashed()->where('staff_id', $staff->id)->first();
 
-            // Device UUID Registration & Verification
-            if ($requestDeviceUuid) {
-                if (!$location) {
-                    try {
-                        $location = Location::firstOrCreate(
-                            ['staff_id' => $staff->id],
-                            [
-                                'lat'         => $userLat,
-                                'lon'         => $userLng,
-                                'allow_meter' => 400,
-                                'device_uuid' => $requestDeviceUuid,
-                            ]
-                        );
-                    } catch (\Illuminate\Database\QueryException $e) {
-                        $location = Location::withTrashed()->where('staff_id', $staff->id)->first();
-                    }
-                }
-
-                if (empty($location->device_uuid)) {
-                    $location->update([
-                        'device_uuid' => $requestDeviceUuid,
-                    ]);
-                } else {
-                    if ($location->device_uuid !== $requestDeviceUuid) {
-                        return response()->json([
-                            'status'  => 'fail',
-                            'message' => 'The device you are using is not registered. Please register your device first.',
-                        ], 403);
-                    }
-                }
-            }
-
-            // Radius and Distance Check
-            $targetLat = $location && $location->lat ? (float) $location->lat : self::OFFICE_LATITUDE;
-            $targetLng = $location && $location->lon ? (float) $location->lon : self::OFFICE_LONGITUDE;
-            $allowedRadius = $location && $location->allow_meter ? (int) $location->allow_meter : self::DEFAULT_OFFICE_RADIUS;
+            $targetLat = ($location && (float) $location->lat != 0) ? (float) $location->lat : $userLat;
+            $targetLng = ($location && (float) $location->lon != 0) ? (float) $location->lon : $userLng;
+            $allowedRadius = ($location && $location->allow_meter) ? (int) $location->allow_meter : self::DEFAULT_OFFICE_RADIUS;
 
             $distanceInMeters = $this->calculateDistance($targetLat, $targetLng, $userLat, $userLng);
-
-            // Apply GPS Accuracy Tolerance
-            if ($userAccuracy > 0) {
-                $effectiveDistance = max(0, $distanceInMeters - ($userAccuracy * 0.7));
-            } else {
-                $effectiveDistance = $distanceInMeters;
-            }
+            $effectiveDistance = $userAccuracy > 0 ? max(0, $distanceInMeters - ($userAccuracy * 0.7)) : $distanceInMeters;
 
             if ($effectiveDistance > $allowedRadius) {
                 $formattedDistance = round($effectiveDistance);
                 return response()->json([
                     'status'  => 'fail',
-                    'message' => "The location you are checking in from is {$formattedDistance} meters away from the allowed location. (Allowed: {$allowedRadius} meters)",
+                    'message' => "The location you are checking in from is too far from the allowed location $formattedDistance meters.",
                 ], 400);
             }
         }
 
-        // 3. SAVE ATTENDANCE RECORD
-        $currentTime = now()->toTimeString();
+        // 3. DATABASE TRANSACTION
+        DB::beginTransaction();
 
-        $attendance = Attendance::create([
-            'staff_id'          => $staff->id,
-            'date'              => $today,
-            'check_in_time'     => $currentTime,
-            'ip_address'        => $clientIp,
-            'latitude'          => $userLat,
-            'longitude'         => $userLng,
-            'accuracy'          => $userAccuracy,
-            'is_laptop'         => $isLaptopClient,
-            'device_type'       => $deviceType,
-            'device_uuid'       => $requestDeviceUuid,
-            'telegram_notified' => 0,
-        ]);
+        try {
+            $location = Location::withTrashed()->where('staff_id', $staff->id)->lockForUpdate()->first();
 
-        // Telegram Notification
-        $staffName = $staff->eng_name ?? $staff->jp_name ?? 'Staff Member';
-        $formattedTime = Carbon::parse($currentTime)->format('h:i A');
+            // Onsite UUID registration
+            if ((int) $staff->work_type !== 2 && $requestDeviceUuid) {
+                if (!$location) {
+                    $location = Location::create([
+                        'staff_id'    => $staff->id,
+                        'lat'         => $userLat,
+                        'lon'         => $userLng,
+                        'allow_meter' => 400,
+                        'device_uuid' => $requestDeviceUuid,
+                    ]);
+                } elseif (empty($location->device_uuid)) {
+                    $location->update(['device_uuid' => $requestDeviceUuid]);
+                    $location->update(['deleted_at' => null]);
+                }
+            }
 
-        $notified = TelegramService::sendMorningNotification($staffName, $formattedTime);
-        if ($notified) {
-            $attendance->update(['telegram_notified' => 1]);
+            // Remote staff location & UUID setup
+            if ((int) $staff->work_type === 2) {
+                if (!$location) {
+                    $location = Location::create([
+                        'staff_id'    => $staff->id,
+                        'lat'         => $userLat,
+                        'lon'         => $userLng,
+                        'allow_meter' => 400,
+                        'device_uuid' => $requestDeviceUuid,
+                    ]);
+                } else {
+                    if ($location->trashed()) {
+                        $location->restore();
+                    }
+
+                    $updateData = [];
+                    if ((float) $location->lat == 0 || (float) $location->lon == 0) {
+                        $updateData['lat'] = $userLat;
+                        $updateData['lon'] = $userLng;
+                        $updateData['allow_meter'] = 400;
+                        $updateData['deleted_at'] = null;
+                    }
+
+                    if (empty($location->device_uuid) && $requestDeviceUuid) {
+                        $updateData['device_uuid'] = $requestDeviceUuid;
+                    }
+
+                    if (!empty($updateData)) {
+                        $location->update($updateData);
+                    }
+                }
+            }
+
+            // Create Attendance
+            $currentTime = now()->toTimeString();
+            $attendance = Attendance::create([
+                'staff_id'          => $staff->id,
+                'date'              => $today,
+                'check_in_time'     => $currentTime,
+                'ip_address'        => $clientIp,
+                'latitude'          => $userLat,
+                'longitude'         => $userLng,
+                'accuracy'          => $userAccuracy,
+                'is_laptop'         => $isLaptopClient,
+                'device_type'       => $deviceType,
+                'device_uuid'       => $requestDeviceUuid,
+                'telegram_notified' => 0,
+            ]);
+
+            // Create late fine if check-in is after 08:30:00
+            $this->createLateFineIfNeeded($staff->id, $today, $currentTime);
+
+            DB::commit();
+
+            // Outside transaction: send Telegram notification
+            try {
+                $staffName = $staff->eng_name ?? $staff->jp_name ?? 'Staff Member';
+                $formattedTime = Carbon::parse($currentTime)->format('h:i A');
+
+                if (TelegramService::sendMorningNotification($staffName, $formattedTime)) {
+                    $attendance->update(['telegram_notified' => 1]);
+                }
+            } catch (\Exception $telegramError) {
+                Log::warning('Telegram Notification failed: ' . $telegramError->getMessage());
+            }
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Attendance Check-in successful.',
+                'data'    => $attendance,
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Attendance Check-in Error: ' . $e->getMessage());
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'An error occurred while processing your request.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Creates a fine record if check-in occurs after 08:30:00.
+     */
+    private function createLateFineIfNeeded(int $staffId, string $date, string $timeStr): ?StaffFine
+    {
+        $checkTime = DateTime::createFromFormat('H:i:s', $timeStr);
+        $eightThirty = DateTime::createFromFormat('H:i:s', '08:30:00');
+        $nineAM = DateTime::createFromFormat('H:i:s', '09:00:00');
+        $tenAM = DateTime::createFromFormat('H:i:s', '10:00:00');
+
+        // Not late
+        if ($checkTime <= $eightThirty) {
+            return null;
         }
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Attendance Check-in successful.',
-            'data'    => $attendance,
-        ], 200);
+        // Tiered fine amounts
+        $lateFine = 0;
+        if ($checkTime > $eightThirty && $checkTime <= $nineAM) {
+            $lateFine = 2000;
+        } elseif ($checkTime > $nineAM && $checkTime <= $tenAM) {
+            $lateFine = 5000;
+        } elseif ($checkTime > $tenAM) {
+            $lateFine = 10000;
+        }
 
-    } catch (\Exception $e) {
-        Log::error('Attendance Check-in Error: ' . $e->getMessage());
+        $inputDate = Carbon::parse($date);
 
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'An error occurred while processing your request.',
-        ], 500);
+        // Fetch monthly count for this staff member
+        $latestRecord = StaffFine::where('staff_id', $staffId)
+            ->whereMonth('date', $inputDate->month)
+            ->whereYear('date', $inputDate->year)
+            ->orderBy('id', 'desc')
+            ->first(['count']);
+
+        $totalCount = $latestRecord ? ((int) $latestRecord->count + 1) : 1;
+
+        return StaffFine::create([
+            'staff_id' => $staffId,
+            'date'     => $date,
+            'time'     => $timeStr,
+            'amount'   => $lateFine,
+            'count'    => $totalCount,
+            'status'   => 0,
+        ]);
     }
-}
+
 
     private function isAllowedIp(string $ip): bool
     {
-        foreach ($this->allowedIps as $allowedIp) {
+        $allowedIps = $this->getAllowedIps();
+
+        foreach ($allowedIps as $allowedIp) {
             if (str_contains($allowedIp, '/')) {
                 if ($this->ipInCidr($ip, $allowedIp)) {
                     return true;
@@ -260,22 +315,33 @@ class AttendanceController extends Controller
                 return true;
             }
         }
+
         return false;
     }
 
     private function ipInCidr(string $ip, string $cidr): bool
     {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return false;
+        }
+
         list($subnet, $mask) = explode('/', $cidr);
+        
         $ipAddr = ip2long($ip);
         $subnetAddr = ip2long($subnet);
-        $maskAddr = ~((1 << (32 - $mask)) - 1);
+        
+        if ($ipAddr === false || $subnetAddr === false) {
+            return false;
+        }
 
-        return ($ipAddr & $maskAddr) == ($subnetAddr & $maskAddr);
+        $maskAddr = -1 << (32 - (int) $mask);
+
+        return ($ipAddr & $maskAddr) === ($subnetAddr & $maskAddr);
     }
 
     private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
-        $earthRadius = 6371000; // Earth radius in meters
+        $earthRadius = 6371000;
 
         $latDelta = deg2rad($lat2 - $lat1);
         $lonDelta = deg2rad($lon2 - $lon1);
@@ -289,7 +355,7 @@ class AttendanceController extends Controller
         return $earthRadius * $c;
     }
 
-       public function getAttendances(Request $request)
+    public function getAttendances(Request $request)
     {
         try {
             $query = Attendance::with(['staff' => function ($q) {
@@ -327,7 +393,7 @@ class AttendanceController extends Controller
             $formattedData = $attendances->map(function ($record) {
                 $checkIn = Carbon::parse($record->check_in_time);
                 $officialStart = Carbon::parse($record->check_in_time)->setTime(8, 30, 0);
-                
+
                 $isLate = $checkIn->greaterThan($officialStart);
                 $lateMinutes = $isLate ? $officialStart->diffInMinutes($checkIn) : 0;
 
@@ -359,31 +425,19 @@ class AttendanceController extends Controller
         }
     }
 
-
-   
     public function deleteAttendance(Request $request)
     {
         $request->validate([
             'id' => 'required|exists:attendances,id',
         ]);
 
-        try {
+        return DB::transaction(function () use ($request) {
             Attendance::where('id', $request->id)->delete();
 
             return response()->json([
                 'status'  => 200,
                 'message' => 'Attendance record deleted successfully.',
             ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'  => 500,
-                'message' => 'Failed to delete attendance record.',
-                'error'   => $e->getMessage(),
-            ], 500);
-        }
+        });
     }
-
-
-
 }

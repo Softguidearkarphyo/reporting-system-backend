@@ -12,15 +12,17 @@ class LocationSeeder extends Seeder
      */
     public function run(): void
     {
-        $lat = 16.8558592;
-        $lon = 96.1576960;
+        // $lat = 16.8558592;
+        // $lon = 96.1576960;
 
+        $lat = 0;
+        $lon = 0;
         for ($i = 1; $i <= 20; $i++) {
             Location::insert([
                 'staff_id' => $i,
                 'lat'      => $lat,
                 'lon'      => $lon,
-                'allow_meter' => 400,
+                'allow_meter' => 0,
                 // 'device_uuid' => NUll,
                 'created_at' => now(),
                 'updated_at' => now(),
