@@ -101,7 +101,8 @@ class ProjectController extends Controller
 
             if (isset($data['week_date'])) {
                 $week_count = (int)$data['week_date'];
-                $startDate = $end_date->copy()->subWeeks($week_count);
+                // $startDate = $end_date->copy()->subWeeks($week_count);
+                $startDate = $end_date->copy()->subWeeks($week_count)->addDay();
                 $query = TaskPerformance::whereHas('staff')->whereHas('project');
                 $result = $query->whereBetween('date', [$startDate, $end_date])->get();
                 $projects_hour = ProjectWorkHourResource::collection($result);

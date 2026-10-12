@@ -12,7 +12,6 @@ class TestAttendance extends Command
 
     public function handle()
     {
-        // Required Fields များကို ဖြည့်သွင်း၍ Staff ထည့်ခြင်း
         $staff = Staff::firstOrCreate(
             ['email' => 'aung@gmail.com'],
             [
