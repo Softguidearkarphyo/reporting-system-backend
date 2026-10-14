@@ -18,13 +18,11 @@ class LeaveResource extends JsonResource
         'id'         => $this->id,
         'rec_id'     => $this->rec_id,
         
-        // Staff Info
         'staff_id'  =>  $this->leave_records?->staff?->id ?? 'Unknown',
         'eng_name'   => $this->leave_records?->staff?->eng_name ?? 'Unknown',
         'jp_name'    => $this->leave_records?->staff?->jp_name ?? 'Unknown',
 
    
-        // Leave Info
         'leave_type' => $this->leave_type,
         'day_count'  => $this->day_count,
         'status'     => $this->status,
@@ -32,7 +30,6 @@ class LeaveResource extends JsonResource
         'duration'   => $this->duration,
         'reason'     => $this->reason,
         
-        // Nested Leave Record Object
         'leave_record_summary' => [
             'year'           => $this->leave_records?->year,
             'permanent_date' => $this->leave_records?->permanent_date,
@@ -45,7 +42,6 @@ class LeaveResource extends JsonResource
             'accumulated_hours'   => $this->leave_records?->accumulated_hours ?? 0,
         ],
 
-        // Timestamps
         'created_at' => $this->created_at,
         'updated_at' => $this->updated_at,
         'deleted_at' => $this->deleted_at,
