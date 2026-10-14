@@ -19,9 +19,11 @@ class LeaveResource extends JsonResource
         'rec_id'     => $this->rec_id,
         
         // Staff Info
+        'staff_id'  =>  $this->leave_records?->staff?->id ?? 'Unknown',
         'eng_name'   => $this->leave_records?->staff?->eng_name ?? 'Unknown',
         'jp_name'    => $this->leave_records?->staff?->jp_name ?? 'Unknown',
-        
+
+   
         // Leave Info
         'leave_type' => $this->leave_type,
         'day_count'  => $this->day_count,
