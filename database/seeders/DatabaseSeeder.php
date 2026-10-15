@@ -4,11 +4,10 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Database\Seeders\CsvDataSeeder;
+use Database\Seeders\AdminSeeder;
 use Database\Seeders\Task\TaskSeeder;
 use Database\Seeders\Grade\GradeSeeder;
 use Database\Seeders\Project\ProjectSeeder;
-use Database\Seeders\Location\LocationSeeder;
 use Database\Seeders\Position\PositionSeeder;
 use Database\Seeders\TechStack\TechStackSeeder;
 use Database\Seeders\JapaneseLevel\JapaneseLevelSeeder;
@@ -20,10 +19,11 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     * Only master/lookup data + the admin account are seeded.
+     * Sample staff data (CsvDataSeeder, LocationSeeder) is no longer called.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
         $this->call([
             ProjectSeeder::class,
             ResponsibilitySeeder::class,
@@ -33,8 +33,9 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,
             GradeSeeder::class,
             JapaneseLevelSeeder::class,
-            CsvDataSeeder::class,
-            LocationSeeder::class,
+            AdminSeeder::class,
+            // CsvDataSeeder::class,   // sample staffs + related data (removed)
+            // LocationSeeder::class,  // locations for staff 1..20 (removed)
         ]);
     }
 }
