@@ -18,6 +18,8 @@ return [
         'http://localhost:5173',
         'http://localhost:5174',
         'http://localhost:3030',
+        'http://127.0.0.1:3080',
+        'http://localhost:3080',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:5174',
     ],
