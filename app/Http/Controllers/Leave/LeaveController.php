@@ -122,6 +122,46 @@ class LeaveController extends Controller
             $firstPeriodEnd   = Carbon::createFromDate($leaveYear, 6, 30)->endOfDay();
             $isFirstHalf      = ($leaveDate >= $firstPeriodStart && $leaveDate <= $firstPeriodEnd);
 
+          $existingLeaves = Leave::where('rec_id', $leaveRecord->id)
+                ->where('leave_date', $leaveDate->format('Y-m-d'))
+                ->get();
+
+            if ($existingLeaves->isNotEmpty()) {
+                foreach ($existingLeaves as $exLeave) {
+                    if ($exLeave->leave_type == 3) {
+                        // Short Leave
+                        $durInt = (int) $exLeave->duration;
+                        $shortHoursMap = [
+                            3 => 3.5, 4 => 3.0, 5 => 2.5, 
+                            6 => 2.0, 7 => 1.5, 8 => 1.0, 9 => 0.5
+                        ];
+                        $deductHrs = $shortHoursMap[$durInt] ?? 0.5;
+                        $leaveRecord->accumulated_hours = max(0, (float) $leaveRecord->accumulated_hours - $deductHrs);
+                    } 
+                    elseif ($exLeave->leave_type == 1) {
+                        // Paid Normal Leave - Use durationMap instead of day_count
+                        $durInt = (int) $exLeave->duration;
+                        $refundAmount = $durationMap[$durInt] ?? (float) $exLeave->day_count;
+
+                        $leaveRecord->total_used = max(0, (float) $leaveRecord->total_used - $refundAmount);
+
+                        if ($isFirstHalf) {
+                            $leaveRecord->first_annual += $refundAmount;
+                        } else {
+                            $leaveRecord->second_annual += $refundAmount;
+                        }
+                    }
+
+                    $exLeave->delete();
+                }
+
+                $leaveRecord->remain_leaves = max(
+                    0,
+                    (float) $leaveRecord->carry_leaves + (float) $leaveRecord->first_annual + (float) $leaveRecord->second_annual
+                );
+                
+                $leaveRecord->save();
+            }
             $carryLeaves = max(0, (float) $leaveRecord->carry_leaves);
             $firstAnnual = max(0, (float) $leaveRecord->first_annual);
             $secondAnnual = max(0, (float) $leaveRecord->second_annual);

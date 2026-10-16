@@ -151,6 +151,19 @@ class LeaveRecordController extends Controller
         9 => 0.5, // 0.5 Hour (30 Mins)
     ];
 
+    // Duration mapping for normal leaves (used for correct refund lookup)
+    $durationMap = [
+        1 => 1.0,      // Full day (8 Hours)
+        2 => 0.5,      // Half day (4 Hours)
+        3 => 0.4375,   // 3 Hrs 30 Min
+        4 => 0.375,    // 3 Hours
+        5 => 0.3125,   // 2 Hrs 30 Min
+        6 => 0.25,     // 2 Hours
+        7 => 0.1875,   // 1 Hr 30 Min
+        8 => 0.125,    // 1 Hour
+        9 => 0.0625,   // 30 Minutes
+    ];
+
     if ($request->has('duration')) {
         $requestedDuration = (int) $request->duration;
         $hours = $durationToHoursMap[$requestedDuration] ?? 0.5;
@@ -188,6 +201,45 @@ class LeaveRecordController extends Controller
             ]
         );
 
+        $firstPeriodStart = Carbon::createFromDate($targetYear, 1, 1)->startOfDay();
+        $firstPeriodEnd   = Carbon::createFromDate($targetYear, 6, 30)->endOfDay();
+        $isFirstHalf      = ($currentLeaveDate >= $firstPeriodStart && $currentLeaveDate <= $firstPeriodEnd);
+        
+        $existingLeaves = $record->leaves()
+            ->where('leave_date', $currentLeaveDate->toDateString())
+            ->get();
+
+        if ($existingLeaves->isNotEmpty()) {
+            foreach ($existingLeaves as $exLeave) {
+                if ($exLeave->leave_type == 3) {
+                    $durId = (int) $exLeave->duration;
+                    $hrs = $durationToHoursMap[$durId] ?? 0.5;
+                    $record->accumulated_hours = max(0, (float) $record->accumulated_hours - $hrs);
+                } 
+                elseif ($exLeave->leave_type == 1) {
+                    // Use durationMap based on duration ID instead of day_count for precise refund
+                    $durInt = (int) $exLeave->duration;
+                    $refundAmount = $durationMap[$durInt] ?? (float) $exLeave->day_count;
+
+                    $record->total_used = max(0, (float) $record->total_used - $refundAmount);
+
+                    if ($isFirstHalf) {
+                        $record->first_annual += $refundAmount;
+                    } else {
+                        $record->second_annual += $refundAmount;
+                    }
+                }
+
+                $exLeave->delete();
+            }
+
+            $record->remain_leaves = max(
+                0,
+                (float) $record->carry_leaves + (float) $record->first_annual + (float) $record->second_annual
+            );
+            $record->save();
+        }
+
         $convertShortLeavesToUnpaid = function () use ($record, $durationToHoursMap) {
             $shortLeaves = $record->leaves()->where('leave_type', 3)->get();
             foreach ($shortLeaves as $sl) {
@@ -213,10 +265,6 @@ class LeaveRecordController extends Controller
             $record->leaves()
                 ->where('leave_type', 3)
                 ->delete();
-
-            $firstPeriodStart = Carbon::createFromDate($targetYear, 1, 1)->startOfDay();
-            $firstPeriodEnd   = Carbon::createFromDate($targetYear, 6, 30)->endOfDay();
-            $isFirstHalf      = ($currentLeaveDate >= $firstPeriodStart && $currentLeaveDate <= $firstPeriodEnd);
 
             // Fetch current balances (including carry_leaves)
             $carryBal  = max(0, (float) $record->carry_leaves);
@@ -397,7 +445,7 @@ class LeaveRecordController extends Controller
         Utility::log("LeaveRecordController::addShortLeave", $e->getMessage() . " | Line: " . $e->getLine() . " | File: " . $e->getFile());
         Log::error("addShortLeave Exception: " . $e->getMessage(), [
             'file'  => $e->getFile(),
-            'line'  => $e->getLine(),
+            'line'  => $e->line ?? $e->getLine(),
             'trace' => $e->getTraceAsString()
         ]);
 
