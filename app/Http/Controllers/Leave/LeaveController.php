@@ -11,7 +11,10 @@ use App\Models\LeaveRecord;
 use Illuminate\Support\Facades\DB;
 use App\ReturnMessage;
 use App\Utility;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator; 
+use Carbon\Carbon;                      
+
 
 class LeaveController extends Controller
 {
@@ -298,6 +301,106 @@ class LeaveController extends Controller
         return response()->json([
             'status' => ReturnMessage::INTERNAL_SERVER_ERROR,
             'error'  => $e->getMessage()
+        ], 500);
+    }
+}
+
+    public function delete(Request $request)
+{
+    DB::beginTransaction();
+    try {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:leaves,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'validation_error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        $leave = Leave::where('id', $data['id'])
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$leave) {
+            return response()->json([
+                'message' => 'Leave record not found or already deleted.'
+            ], 404);
+        }
+
+        $leaveRecord = LeaveRecord::where('id', $leave->rec_id)
+            ->lockForUpdate()
+            ->first();
+
+        if ($leaveRecord) {
+            $durationMap = [
+                1 => 1.0,      // Full day (8 Hours)
+                2 => 0.5,      // Half day (4 Hours)
+                3 => 0.4375,   // 3 Hrs 30 Min
+                4 => 0.375,    // 3 Hours
+                5 => 0.3125,   // 2 Hrs 30 Min
+                6 => 0.25,     // 2 Hours
+                7 => 0.1875,   // 1 Hr 30 Min
+                8 => 0.125,    // 1 Hour
+                9 => 0.0625,   // 30 Minutes
+            ];
+
+            $shortHoursMap = [
+                3 => 3.5, 4 => 3.0, 5 => 2.5, 
+                6 => 2.0, 7 => 1.5, 8 => 1.0, 9 => 0.5
+            ];
+
+            $leaveDate = Carbon::parse($leave->leave_date);
+            $leaveYear = (int) $leaveDate->format('Y');
+
+            $firstPeriodStart = Carbon::createFromDate($leaveYear, 1, 1)->startOfDay();
+            $firstPeriodEnd   = Carbon::createFromDate($leaveYear, 6, 30)->endOfDay();
+            $isFirstHalf      = ($leaveDate >= $firstPeriodStart && $leaveDate <= $firstPeriodEnd);
+
+            if ($leave->leave_type == 3) {
+                $durId = (int) $leave->duration;
+                $deductHrs = $shortHoursMap[$durId] ?? 0.5;
+                $leaveRecord->accumulated_hours = max(0, (float) $leaveRecord->accumulated_hours - $deductHrs);
+            }
+            elseif ($leave->leave_type == 1) {
+                $durInt = (int) $leave->duration;
+                $refundAmount = $durationMap[$durInt] ?? (float) $leave->day_count;
+
+                $leaveRecord->total_used = max(0, (float) $leaveRecord->total_used - $refundAmount);
+
+                if ($isFirstHalf) {
+                    $leaveRecord->first_annual += $refundAmount;
+                } else {
+                    $leaveRecord->second_annual += $refundAmount;
+                }
+            }
+            $leaveRecord->remain_leaves = max(
+                0,
+                (float) $leaveRecord->carry_leaves + (float) $leaveRecord->first_annual + (float) $leaveRecord->second_annual
+            );
+
+            $leaveRecord->save();
+        }
+
+        $leave->update(['deleted_at' => now()]);
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Leave deleted successfully',
+            'id' => $data['id']
+        ], 200);
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Utility::log("LeaveController::delete", $e->getMessage());
+        return response()->json([
+            'message' => 'Server Error',
+            'error'   => $e->getMessage()
         ], 500);
     }
 }
