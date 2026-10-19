@@ -189,38 +189,55 @@ public function update(StaffUpdateRequest $request)
     {
         DB::beginTransaction();
         try {
-            $data       = $request->all();
-            $time       = DateTime::createFromFormat('H:i:s', $data['time']);
-            $eightAM    = DateTime::createFromFormat('H:i:s', '08:30:00');
-            $nineAM     = DateTime::createFromFormat('H:i:s', '09:00:00');
-            $tenAm      = DateTime::createFromFormat('H:i:s', '10:00:00');
-            $inputDate  = Carbon::parse($data['date']);
-            $query      = StaffFine::query();
+            $data      = $request->all();
+            $time      = DateTime::createFromFormat('H:i:s', $data['time']);
+            $eightAM   = DateTime::createFromFormat('H:i:s', '08:30:00');
+            $nineAM    = DateTime::createFromFormat('H:i:s', '09:00:00');
+            $tenAm     = DateTime::createFromFormat('H:i:s', '10:00:00');
+            $inputDate = Carbon::parse($data['date']);
 
-            if ($time >  $eightAM && $time <= $nineAM) {
+            $lateFine = 0;
+            if ($time > $eightAM && $time <= $nineAM) {
                 $lateFine = 2000;
             } else if ($time > $nineAM && $time <= $tenAm) {
                 $lateFine = 5000;
             } else if ($time > $tenAm) {
                 $lateFine = 10000;
             }
-            $getCount = $query->where('staff_id', $data['staff'])
-                ->whereMonth('date', $inputDate->month)
-                ->whereYear('date', $inputDate->year)
-                ->orderBy('created_at', 'desc')
-                ->first(['count']);
-            $totalCount = ($getCount == null) ? 1 : $getCount->count + 1;
-            $createData = [
-                'staff_id' => $data['staff'],
-                'date'     => $data['date'],
-                'time'     => $time,
-                'amount'   => $lateFine,
-                'count'    => $totalCount,
-                'status'   => 0,
-            ];
-            StaffFine::create($createData);
+
+            $existingFine = StaffFine::where('staff_id', $data['staff'])
+                ->whereDate('date', $inputDate->toDateString())
+                ->first();
+
+            if ($existingFine) {
+                $existingFine->update([
+                    'time'   => $data['time'],
+                    'amount' => $lateFine,
+                ]);
+            } else {
+                // If it doesn't exist, calculate count for the month and create new
+                $getCount = StaffFine::where('staff_id', $data['staff'])
+                    ->whereMonth('date', $inputDate->month)
+                    ->whereYear('date', $inputDate->year)
+                    ->orderBy('created_at', 'desc')
+                    ->first(['count']);
+
+                $totalCount = ($getCount == null) ? 1 : $getCount->count + 1;
+
+                StaffFine::create([
+                    'staff_id' => $data['staff'],
+                    'date'     => $data['date'],
+                    'time'     => $data['time'],
+                    'amount'   => $lateFine,
+                    'count'    => $totalCount,
+                    'status'   => 0,
+                ]);
+            }
+
             DB::commit();
-        } catch (\Throwable  $e) {
+            return response()->json(['message' => 'Fine processed successfully.'], 200);
+
+        } catch (\Throwable $e) {
             DB::rollBack();
             Utility::log("MemberController::createFines", $e->getMessage());
             return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
