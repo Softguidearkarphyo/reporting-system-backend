@@ -18,33 +18,41 @@ use Carbon\Carbon;
 
 class LeaveController extends Controller
 {
-    public function get(LeaveGetRequest $request)
-    {
-        try {
-            $data = $request->all();
-            $query = Leave::with(['leave_records.staff']);
+  public function get(LeaveGetRequest $request)
+{
+    try {
+        $data = $request->all();
+        
+        $query = Leave::with(['leave_records.staff']);
 
-            if (!empty($data['id'])) {
-                $query->where('id', $data['id']);
-            }
+        $query->whereNull('deleted_at');
 
-            if (!empty($data['rec_id'])) {
-                $query->where('rec_id', $data['rec_id']);
-            }
-
-            $leaves = $query->get();
-            return response()->json(LeaveResource::collection($leaves));
-        } catch (\Throwable $e) {
-            Utility::log("LeaveController::get", $e->getMessage());
-            return response()->json([
-                'message' => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine()
-            ], ReturnMessage::INTERNAL_SERVER_ERROR);
+        if (!empty($data['id'])) {
+            $query->where('id', $data['id']);
         }
-    }
 
-    public function create(LeaveCreateRequest $request)
+        if (!empty($data['rec_id'])) {
+            $query->where('rec_id', $data['rec_id']);
+        }
+
+        if (!empty($data['month']) && !empty($data['year'])) {
+            $query->whereMonth('leave_date', $data['month'])
+                  ->whereYear('leave_date', $data['year']);
+        }
+
+        $leaves = $query->get();
+        return response()->json(LeaveResource::collection($leaves));
+    } catch (\Throwable $e) {
+        Utility::log("LeaveController::get", $e->getMessage());
+        return response()->json([
+            'message' => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine()
+        ], ReturnMessage::INTERNAL_SERVER_ERROR);
+    }
+}
+
+  public function create(LeaveCreateRequest $request)
     {
         DB::beginTransaction();
 
@@ -172,8 +180,8 @@ class LeaveController extends Controller
                     $leaveRecord->save();
                 }
 
-                $carryLeaves = max(0, (float) $leaveRecord->carry_leaves);
-                $firstAnnual = max(0, (float) $leaveRecord->first_annual);
+                $carryLeaves  = max(0, (float) $leaveRecord->carry_leaves);
+                $firstAnnual  = max(0, (float) $leaveRecord->first_annual);
                 $secondAnnual = max(0, (float) $leaveRecord->second_annual);
 
                 // Calculate total available balance including carry leaves
@@ -181,6 +189,32 @@ class LeaveController extends Controller
                     $availableBalance = $carryLeaves + $firstAnnual;
                 } else {
                     $availableBalance = $carryLeaves + $secondAnnual + $firstAnnual;
+                }
+
+                // If balance is 0 or less, handle short leaves / small durations by storing in accumulated_hours or marking as unpaid
+                if ($availableBalance <= 0) {
+                    $leaveRecord->remain_leaves = 0;
+
+                    // If it's a short/small duration (e.g. less than a full day or specific small chunk), 
+                    // we can accumulate hours if it fits short leave logic, otherwise treat as unpaid.
+                    if ($appliedDuration < 1.0) {
+                        $additionalHours = $appliedDuration * 8.0; // convert day count to hours
+                        $leaveRecord->accumulated_hours += $additionalHours;
+                        
+                        // If accumulated hours reach 4 or more, it can be handled or kept tracked
+                        $leaveRecord->save();
+
+                        $shortLeave = Leave::create([
+                            "rec_id"     => $leaveRecord->id,
+                            "leave_date" => $leaveDate->format('Y-m-d'),
+                            "duration"   => (string) $durationId,
+                            "reason"     => $data['reason'] ?? null,
+                            "day_count"  => $appliedDuration,
+                            "leave_type" => 3, // Short leave type accumulating hours
+                        ]);
+                        $leaves[] = new LeaveResource($shortLeave);
+                        continue;
+                    }
                 }
 
                 if ($availableBalance >= $appliedDuration) {
@@ -198,14 +232,12 @@ class LeaveController extends Controller
                 if ($paidAmount > 0) {
                     $remainingToDeduct = $paidAmount;
 
-                    // 1. Deduct from Carry Leaves first
                     if ($leaveRecord->carry_leaves > 0) {
                         $deductCarry = min($leaveRecord->carry_leaves, $remainingToDeduct);
                         $leaveRecord->carry_leaves -= $deductCarry;
                         $remainingToDeduct -= $deductCarry;
                     }
 
-                    // 2. Deduct remaining from Annual Leaves
                     if ($remainingToDeduct > 0) {
                         if ($isFirstHalf) {
                             $leaveRecord->first_annual = max(0, (float) $leaveRecord->first_annual - $remainingToDeduct);
@@ -220,31 +252,11 @@ class LeaveController extends Controller
                         }
                     }
 
-                    // Update totals and remain_leaves
                     $leaveRecord->total_used += $paidAmount;
                     $leaveRecord->remain_leaves = max(
                         0,
                         (float) $leaveRecord->carry_leaves + (float) $leaveRecord->first_annual + (float) $leaveRecord->second_annual
                     );
-
-                    // If balance is depleted, convert active short leaves to unpaid
-                    if ($leaveRecord->remain_leaves <= 0) {
-                        $leaveRecord->remain_leaves = 0;
-                        $leaveRecord->accumulated_hours = 0.0;
-
-                        $existingShortLeaves = $leaveRecord->leaves()->where('leave_type', 3)->get();
-                        foreach ($existingShortLeaves as $sl) {
-                            $durInt = (int) $sl->duration;
-                            $dayCountVal = $durationMap[$durInt] ?? 0.0625;
-                            $sl->update([
-                                'leave_type' => 0, // Unpaid
-                                'day_count'  => $dayCountVal,
-                                'reason'     => ($sl->reason ? $sl->reason . ' ' : '') . '(Converted to Unpaid - Leave balance depleted)',
-                            ]);
-                            // Also track converted short leaves in unpaid column
-                            $leaveRecord->unpaid += $dayCountVal;
-                        }
-                    }
 
                     $leaveRecord->save();
 
@@ -263,25 +275,13 @@ class LeaveController extends Controller
 
                 // Process Unpaid Portion
                 if ($unpaidAmount > 0) {
-                    if ($leaveRecord->remain_leaves <= 0) {
-                        $leaveRecord->remain_leaves = 0;
-                        $leaveRecord->accumulated_hours = 0.0;
-
-                        $existingShortLeaves = $leaveRecord->leaves()->where('leave_type', 3)->get();
-                        foreach ($existingShortLeaves as $sl) {
-                            $durInt = (int) $sl->duration;
-                            $dayCountVal = $durationMap[$durInt] ?? 0.0625;
-                            $sl->update([
-                                'leave_type' => 0, // Unpaid
-                                'day_count'  => $dayCountVal,
-                                'reason'     => ($sl->reason ? $sl->reason . ' ' : '') . '(Converted to Unpaid - Leave balance depleted)',
-                            ]);
-                            $leaveRecord->unpaid += $dayCountVal;
-                        }
+                    $leaveRecord->unpaid += $unpaidAmount;
+                    
+                    // If duration is small and no balance remains, we can also accumulate hours
+                    if ($appliedDuration < 1.0) {
+                        $leaveRecord->accumulated_hours += ($appliedDuration * 8.0);
                     }
 
-                    // Accumulate unpaid amount into leave_record unpaid column
-                    $leaveRecord->unpaid += $unpaidAmount;
                     $leaveRecord->save();
 
                     $unpaidDurationId = $getDurationId($unpaidAmount, $durationId);
@@ -316,7 +316,7 @@ class LeaveController extends Controller
         }
     }
 
-    public function delete(Request $request)
+   public function delete(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -377,6 +377,11 @@ class LeaveController extends Controller
                     $durId = (int) $leave->duration;
                     $deductHrs = $shortHoursMap[$durId] ?? 0.5;
                     $leaveRecord->accumulated_hours = max(0, (float) $leaveRecord->accumulated_hours - $deductHrs);
+
+                    // If this short leave was converted or counted with day_count (unpaid short leave)
+                    if ($leave->day_count > 0) {
+                        $leaveRecord->unpaid = max(0, (float) $leaveRecord->unpaid - (float) $leave->day_count);
+                    }
                 }
                 elseif ($leave->leave_type == 1) {
                     // Paid Normal Leave

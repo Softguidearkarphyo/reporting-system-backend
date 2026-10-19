@@ -140,7 +140,7 @@ class LeaveRecordController extends Controller
         }
     }
 
-  public function addShortLeave(Request $request)
+    public function addShortLeave(Request $request)
     {
         $durationToHoursMap = [
             3 => 3.5, // 3.5 Hours
@@ -260,7 +260,6 @@ class LeaveRecordController extends Controller
                         'reason'     => ($sl->reason ? $sl->reason . ' ' : '') . '(Converted to Unpaid - Leave balance depleted)',
                     ]);
 
-                    // Accumulate converted short leave into unpaid column
                     $record->unpaid += $dayCount;
                 }
             };
@@ -268,6 +267,7 @@ class LeaveRecordController extends Controller
             $addedHours = (float) $request->hours;
             $totalHours = (float) $record->accumulated_hours + $addedHours;
 
+            // When accumulated hours reach 4.0 or more, convert into a half-day/full-day leave deduction
             if ($totalHours >= 4.0) {
                 $daysToDeduct = floor($totalHours / 4.0) * 0.5; 
                 $remainingHours = fmod($totalHours, 4.0);       
@@ -344,7 +344,6 @@ class LeaveRecordController extends Controller
                         'leave_type' => 0, // Unpaid
                     ]);
 
-                    // Accumulate unpaid amount into leave_record unpaid column
                     $record->unpaid += $unpaidAmount;
                 }
 
@@ -384,7 +383,6 @@ class LeaveRecordController extends Controller
                             'leave_type' => 0, // Unpaid
                         ]);
 
-                        // Add remainder to unpaid column
                         $record->unpaid += $remainderDayCount;
                     }
                 } else {
@@ -408,38 +406,20 @@ class LeaveRecordController extends Controller
                 }
 
             } else {
+                // Under 4 accumulated hours: Always store in accumulated_hours even if balance is 0 or depleted
                 $totalRemaining = (float) $record->carry_leaves + (float) $record->first_annual + (float) $record->second_annual;
                 $record->remain_leaves = max(0, $totalRemaining);
 
-                if ($totalRemaining > 0) {
-                    $record->accumulated_hours = $totalHours;
+                $record->accumulated_hours = $totalHours;
 
-                    $record->leaves()->create([
-                        'rec_id'     => $record->id,
-                        'leave_date' => $currentLeaveDate->toDateString(),
-                        'duration'   => (string) ($request->duration ?? 9),
-                        'day_count'  => 0,
-                        'reason'     => $request->reason ?? null,
-                        'leave_type' => 3, // Short leave
-                    ]);
-                } else {
-                    $record->accumulated_hours = 0.0;
-                    $convertShortLeavesToUnpaid();
-
-                    $unpaidDayCount = $addedHours / 8.0;
-
-                    $record->leaves()->create([
-                        'rec_id'     => $record->id,
-                        'leave_date' => $currentLeaveDate->toDateString(),
-                        'duration'   => (string) ($request->duration ?? 9),
-                        'day_count'  => $unpaidDayCount,
-                        'reason'     => ($request->reason ? $request->reason . ' ' : '') . '(Unpaid short leave - No leave balance)',
-                        'leave_type' => 0, // Unpaid Leave
-                    ]);
-
-                    // Add unpaid short leave day count to unpaid column
-                    $record->unpaid += $unpaidDayCount;
-                }
+                $record->leaves()->create([
+                    'rec_id'     => $record->id,
+                    'leave_date' => $currentLeaveDate->toDateString(),
+                    'duration'   => (string) ($request->duration ?? 9),
+                    'day_count'  => 0,
+                    'reason'     => $request->reason ?? null,
+                    'leave_type' => 3, // Short leave accumulating hours
+                ]);
             }
 
             $record->save();
