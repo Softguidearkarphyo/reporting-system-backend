@@ -9,11 +9,13 @@ use App\Models\LeaveRecord;
 use App\Models\Leave;
 use App\Models\Staff;
 use App\Models\Attendance; 
+use App\Models\OverTime;
+use App\Models\StaffFine;
 
 class UpdateYearlyLeaves extends Command
 {
     protected $signature = 'leaves:update {target_year?}';
-    protected $description = 'Carry over remaining leaves, archive previous year records, hard delete attendances, and initialize new year';
+    protected $description = 'Carry over remaining leaves, archive previous year records, hard delete attendances, overtimes, fines, and initialize new year';
 
     public function handle(): int
     {
@@ -76,22 +78,37 @@ class UpdateYearlyLeaves extends Command
                     'total_used'        => 0.0,
                     'total_leaves'      => $newTotalLeaves,
                     'accumulated_hours' => 0.0,
-                    'unpaid' => 0.0,
+                    'unpaid'            => 0.0,
                 ]);
 
                 $createdCount++;
             }
 
-        
+            // Hard delete attendance records prior to target year
             $deletedAttendances = Attendance::withTrashed()
                 ->whereYear('date', '<', $currentYear)
                 ->forceDelete();
 
             $this->info("Hard deleted {$deletedAttendances} attendance record(s) from previous years.");
             Log::info("Hard deleted {$deletedAttendances} attendance record(s) for year transition to {$currentYear}.");
-            
 
-            // softdelete archived records
+            // Hard delete overtime records prior to target year
+            $deletedOvertimes = OverTime::withTrashed()
+                ->whereYear('ot_date', '<', $currentYear)
+                ->forceDelete();
+
+            $this->info("Hard deleted {$deletedOvertimes} overtime record(s) from previous years.");
+            Log::info("Hard deleted {$deletedOvertimes} overtime record(s) for year transition to {$currentYear}.");
+
+            // Hard delete staff fine records prior to target year
+            $deletedFines = StaffFine::withTrashed()
+                ->whereYear('date', '<', $currentYear)
+                ->forceDelete();
+
+            $this->info("Hard deleted {$deletedFines} fine record(s) from previous years.");
+            Log::info("Hard deleted {$deletedFines} fine record(s) for year transition to {$currentYear}.");
+
+            // Soft delete archived leave records
             if (!empty($archivedRecordIds)) {
                 $affectedLeaves = Leave::whereIn('rec_id', $archivedRecordIds)
                     ->whereNull('deleted_at')
