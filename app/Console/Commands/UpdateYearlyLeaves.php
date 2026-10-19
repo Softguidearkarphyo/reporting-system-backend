@@ -76,6 +76,7 @@ class UpdateYearlyLeaves extends Command
                     'total_used'        => 0.0,
                     'total_leaves'      => $newTotalLeaves,
                     'accumulated_hours' => 0.0,
+                    'unpaid' => 0.0,
                 ]);
 
                 $createdCount++;

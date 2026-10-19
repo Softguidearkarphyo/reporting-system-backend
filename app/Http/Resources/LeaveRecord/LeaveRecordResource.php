@@ -28,6 +28,7 @@ class LeaveRecordResource extends JsonResource
             'total_leaves'   => $this->total_leaves,
             'total_used'     => $this->total_used,
             'accumulated_hours' => $this->accumulated_hours,
+            'unpaid' => $this->unpaid,
             'leaves'         => $this->whenLoaded('leaves', function () {
                 return $this->leaves->map(function ($leave) {
                     return [

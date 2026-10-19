@@ -29,6 +29,7 @@ class LeaveRecordCreateRequest extends FormRequest
             'total_given'    => ['nullable'],
             'total_used'     => ['nullable'],
             'accumulated_hours' => ['nullable', 'numeric', 'min:0'],
+            'unpaid'  => ['nullable'],
         ];
     }
 

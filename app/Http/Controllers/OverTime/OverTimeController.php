@@ -12,8 +12,6 @@ use App\Http\Resources\OverTime\OverTimeResource;
 use App\Http\Requests\OverTime\OverTimeGetRequest;
 use App\Http\Requests\OverTime\OverTimeCreateRequest;
 use App\Http\Requests\OverTime\OverTimeDeleteRequest; 
-use App\Helpers\ReturnMessage; 
-use App\Helpers\Utility;
 
 class OverTimeController extends Controller
 {
@@ -36,8 +34,11 @@ class OverTimeController extends Controller
 
             return response()->json($overtime);
         } catch (\Throwable $e) {
-            Utility::log("OverTimeController::get", $e->getMessage());
-            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+            Log::error("OverTimeController::get error: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Server Error',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -45,19 +46,29 @@ class OverTimeController extends Controller
     {
         DB::beginTransaction();
         try {
-            $data = $request->all();
-            $createData = [
-                "staff_id" => $data['staff_id'],
-                'ot_date'  => $data['ot_date'],
-                'ot_time'  => $data['ot_time'],
-            ];
-            $ot = new OverTimeResource(OverTime::create($createData));
+            $data = $request->validated();
+
+            // If staff_id and ot_date already exist, update ot_time. Otherwise, create a new record.
+            $otRecord = OverTime::updateOrCreate(
+                [
+                    "staff_id" => $data['staff_id'],
+                    'ot_date'  => $data['ot_date'],
+                ],
+                [
+                    'ot_time'  => $data['ot_time'],
+                ]
+            );
+
+            $ot = new OverTimeResource($otRecord);
             DB::commit();
             return response()->json($ot);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Utility::log("OverTimeController::create", $e->getMessage());
-            return response()->json(["status" => ReturnMessage::INTERNAL_SERVER_ERROR], 500);
+            Log::error("OverTimeController::create error: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Server Error',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -100,33 +111,33 @@ class OverTimeController extends Controller
         }
     }
 
-public function delete(Request $request)
-{
-    DB::beginTransaction();
-    try {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required|integer|exists:over_times,id',
-        ]);
+    public function delete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer|exists:over_times,id',
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'validation_error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $data = $validator->validated();
+            OverTime::where('id', $data['id'])->update(['deleted_at' => now()]);
+            
+            DB::commit();
+            return response()->json($data['id']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error("OverTimeController::delete error: " . $e->getMessage());
             return response()->json([
-                'status' => 'validation_error',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Server Error',
+                'error'   => $e->getMessage()
+            ], 500);
         }
-
-        $data = $validator->validated();
-        OverTime::where('id', $data['id'])->update(['deleted_at' => now()]);
-        
-        DB::commit();
-        return response()->json($data['id']);
-    } catch (\Throwable $e) {
-        DB::rollBack();
-        Utility::log("OverTimeController::delete", $e->getMessage());
-        return response()->json([
-            'message' => 'Server Error',
-            'error'   => $e->getMessage()
-        ], 500);
     }
-}
 }
