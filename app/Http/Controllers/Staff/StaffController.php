@@ -244,19 +244,35 @@ public function update(StaffUpdateRequest $request)
         }
     }
 
-    public function getFines()
+
+    public function getFines(StaffFineRequest $request)
     {
         try {
-            $query = StaffFine::query();
+            $data = $request->validated();
 
-            $staffFines = $query->whereHas('staff')
-                ->orderBy('date')
-                ->get();
-            $staffFines = StaffFineResource::collection($staffFines);
-            return response()->json(["data" => $staffFines]);
-        } catch (\Throwable  $e) {
+            $query = StaffFine::query()->whereHas('staff');
+
+            if (!empty($data['id'])) {
+                $query->where('id', $data['id']);
+            }
+
+            if (!empty($data['month']) && !empty($data['year'])) {
+                $query->whereMonth('date', $data['month'])
+                    ->whereYear('date', $data['year']);
+            }
+
+            $staffFines = $query->orderBy('date')->get();
+
+            return response()->json([
+                "data" => StaffFineResource::collection($staffFines)
+            ]);
+        } catch (\Throwable $e) {
             Utility::log("MemberController::getFines", $e->getMessage());
-            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine()
+            ], ReturnMessage::INTERNAL_SERVER_ERROR);
         }
     }
 
