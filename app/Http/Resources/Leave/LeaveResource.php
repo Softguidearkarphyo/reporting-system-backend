@@ -40,6 +40,7 @@ class LeaveResource extends JsonResource
             'total_used'     => $this->leave_records?->total_used ?? 0,
             'total_leaves'   => $this->leave_records?->total_leaves ?? 0,
             'accumulated_hours'   => $this->leave_records?->accumulated_hours ?? 0,
+            'unpaid' => $this->leave_records?->unpaid ?? 0,
         ],
 
         'created_at' => $this->created_at,

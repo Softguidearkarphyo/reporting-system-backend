@@ -23,8 +23,10 @@ class OverTimeCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'staff_id' => 'required|exists:staffs,id',
             'ot_date'    => ['required', 'date'],
             'ot_time'    => ['required'],
+            
         ];
     }
 }

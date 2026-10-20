@@ -21,6 +21,7 @@ class LeaveRecord extends Model
         'total_leaves',
         'total_used',
         'accumulated_hours',
+        'unpaid',
         'created_at',
         'updated_at',
         'deleted_at',

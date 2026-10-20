@@ -255,15 +255,20 @@ class AttendanceController extends Controller
         }
     }
 
-    /**
-     * Creates a fine record if check-in occurs after 08:30:00.
-     */
-    private function createLateFineIfNeeded(int $staffId, string $date, string $timeStr): ?StaffFine
+
+   private function createLateFineIfNeeded(int $staffId, string $date, string $timeStr): ?StaffFine
     {
         $checkTime = DateTime::createFromFormat('H:i:s', $timeStr);
         $eightThirty = DateTime::createFromFormat('H:i:s', '08:30:00');
         $nineAM = DateTime::createFromFormat('H:i:s', '09:00:00');
         $tenAM = DateTime::createFromFormat('H:i:s', '10:00:00');
+
+        $inputDate = Carbon::parse($date);
+
+        // Check if fine record already exists for this staff on this specific date
+        $existingFine = StaffFine::where('staff_id', $staffId)
+            ->whereDate('date', $inputDate->toDateString())
+            ->first();
 
         // Not late
         if ($checkTime <= $eightThirty) {
@@ -280,9 +285,16 @@ class AttendanceController extends Controller
             $lateFine = 10000;
         }
 
-        $inputDate = Carbon::parse($date);
+        if ($existingFine) {
+            // If already exists for this date, update time and amount (preserve original count and status)
+            $existingFine->update([
+                'time'   => $timeStr,
+                'amount' => $lateFine,
+            ]);
+            return $existingFine;
+        }
 
-        // Fetch monthly count for this staff member
+        // Fetch monthly count for this staff member for a new record
         $latestRecord = StaffFine::where('staff_id', $staffId)
             ->whereMonth('date', $inputDate->month)
             ->whereYear('date', $inputDate->year)
