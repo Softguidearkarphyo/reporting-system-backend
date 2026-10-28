@@ -360,33 +360,45 @@ class LeaveRecordController extends Controller
                     '0.5' => '9',
                 ];
 
-                if ($totalRemaining <= 0) {
-                    $record->carry_leaves = 0;
-                    $record->remain_leaves = 0;
-                    $record->first_annual = 0;
-                    $record->second_annual = 0;
-                    $record->accumulated_hours = 0.0;
+               if ($totalRemaining <= 0) {
+    $record->carry_leaves = 0;
+    $record->remain_leaves = 0;
+    $record->first_annual = 0;
+    $record->second_annual = 0;
+    $record->accumulated_hours = 0.0;
 
-                    $convertShortLeavesToUnpaid();
+    // ယခင် ရှိနှင့်ပြီးသား Short Leave များကို Unpaid ပြောင်းလိုက ပြောင်းမည် (သို့မဟုတ် Short Leave အတိုင်း ထားမည်)
+    // $convertShortLeavesToUnpaid();
 
-                    if ($remainingHours > 0) {
-                        $durationKey = (string) $remainingHours;
-                        $remDurationId = $hoursToDurationMap[$durationKey] ?? '9';
+    if ($remainingHours > 0) {
+        $durationKey = (string) $remainingHours;
+        $remDurationId = $hoursToDurationMap[$durationKey] ?? '9';
+        
+                    if ($remainingHours >= 4.0) {
                         $remainderDayCount = $remainingHours / 8.0;
-
                         $record->leaves()->create([
                             'rec_id'     => $record->id,
                             'leave_date' => $currentLeaveDate->toDateString(),
                             'duration'   => $remDurationId,
                             'day_count'  => $remainderDayCount,
-                            'reason'     => ($request->reason ? $request->reason . ' ' : '') . '(Unpaid short leave - No leave balance)',
+                            'reason'     => ($request->reason ? $request->reason . ' ' : '') . '(Unpaid leave - No leave balance)',
                             'leave_type' => 0, // Unpaid
                         ]);
-
                         $record->unpaid += $remainderDayCount;
+                    } else {
+                        $record->accumulated_hours = $remainingHours;
+                        $record->leaves()->create([
+                            'rec_id'     => $record->id,
+                            'leave_date' => $currentLeaveDate->toDateString(),
+                            'duration'   => $remDurationId,
+                            'day_count'  => 0,
+                            'reason'     => $request->reason ?? 'Short leave remainder',
+                            'leave_type' => 3, // Short Leave
+                        ]);
                     }
-                } else {
-                    if ($remainingHours > 0) {
+                }
+            } else {
+                     if ($remainingHours > 0) {
                         $durationKey = (string) $remainingHours;
                         $remDurationId = $hoursToDurationMap[$durationKey] ?? '9';
 

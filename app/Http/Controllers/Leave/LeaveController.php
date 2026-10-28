@@ -191,17 +191,13 @@ class LeaveController extends Controller
                     $availableBalance = $carryLeaves + $secondAnnual + $firstAnnual;
                 }
 
-                // If balance is 0 or less, handle short leaves / small durations by storing in accumulated_hours or marking as unpaid
+               
                 if ($availableBalance <= 0) {
                     $leaveRecord->remain_leaves = 0;
 
-                    // If it's a short/small duration (e.g. less than a full day or specific small chunk), 
-                    // we can accumulate hours if it fits short leave logic, otherwise treat as unpaid.
                     if ($appliedDuration < 1.0) {
-                        $additionalHours = $appliedDuration * 8.0; // convert day count to hours
+                        $additionalHours = $appliedDuration * 8.0; 
                         $leaveRecord->accumulated_hours += $additionalHours;
-                        
-                        // If accumulated hours reach 4 or more, it can be handled or kept tracked
                         $leaveRecord->save();
 
                         $shortLeave = Leave::create([
@@ -210,10 +206,13 @@ class LeaveController extends Controller
                             "duration"   => (string) $durationId,
                             "reason"     => $data['reason'] ?? null,
                             "day_count"  => $appliedDuration,
-                            "leave_type" => 3, // Short leave type accumulating hours
+                            "leave_type" => 3, // Short leave accumulating hours
                         ]);
                         $leaves[] = new LeaveResource($shortLeave);
                         continue;
+                    } else {
+                        $paidAmount   = 0.0;
+                        $unpaidAmount = $appliedDuration;
                     }
                 }
 
@@ -373,12 +372,13 @@ class LeaveController extends Controller
                 $isFirstHalf      = ($leaveDate >= $firstPeriodStart && $leaveDate <= $firstPeriodEnd);
 
                 if ($leave->leave_type == 3) {
-                    // Short Leave
                     $durId = (int) $leave->duration;
                     $deductHrs = $shortHoursMap[$durId] ?? 0.5;
-                    $leaveRecord->accumulated_hours = max(0, (float) $leaveRecord->accumulated_hours - $deductHrs);
 
-                    // If this short leave was converted or counted with day_count (unpaid short leave)
+                    if ($leave->day_count <= 0) {
+                        $leaveRecord->accumulated_hours = max(0, (float) $leaveRecord->accumulated_hours - $deductHrs);
+                    }
+
                     if ($leave->day_count > 0) {
                         $leaveRecord->unpaid = max(0, (float) $leaveRecord->unpaid - (float) $leave->day_count);
                     }
