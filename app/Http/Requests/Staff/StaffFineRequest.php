@@ -22,7 +22,15 @@ class StaffFineRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date'      => 'required|date|min:0',
+            'id'       => 'nullable|integer',
+            'month'    => 'nullable|integer|between:1,12',
+            'year'     => 'nullable|integer|digits:4',
+
+            'staff_id' => 'sometimes|required|integer|exists:staffs,id',
+            'date'     => 'sometimes|required|date',
+            'amount'   => 'sometimes|required|numeric|min:0',
+            'count'    => 'sometimes|required|integer|min:1',
+            'status'   => 'nullable|integer',
         ];
     }
 }

@@ -14,36 +14,42 @@ use Illuminate\Support\Facades\Validator;
 class LocationController extends Controller
 {
     public function getLocationStaffs(Request $request)
-    {
-        try {
-            $staffs = Staff::whereNull('deleted_at')
-            ->select('id', 'staff_no', 'eng_name', 'jp_name', 'email','work_type')
+{
+    try {
+        $staffs = Staff::whereNull('deleted_at')
+            ->select('id', 'staff_no', 'eng_name', 'jp_name', 'email', 'work_type')
             ->get();
 
-            $staffIds = $staffs->pluck('id');
-            $locations = Location::whereIn('staff_id', $staffIds)->get()->keyBy('staff_id');
+        $staffIds = $staffs->pluck('id');
 
-            $result = $staffs->map(function ($staff) use ($locations) {
-                $location = $locations->get($staff->id);
-                return [
-                    'id'          => $staff->id,
-                    'staff_no'    => $staff->staff_no,
-                    'eng_name'    => $staff->eng_name,
-                    'work_type'    => $staff->work_type,
-                    'jp_name'     => $staff->jp_name,
-                    'lat'         => $location ? $location->lat : null,
-                    'lon'         => $location ? $location->lon : null,
-                    'allow_meter' => $location ? $location->allow_meter : null,
-                    'device_uuid' => $location ? $location->device_uuid : null,
-                ];
-            });
+        $locations = Location::withTrashed()
+            ->whereIn('staff_id', $staffIds)
+            ->get()
+            ->keyBy('staff_id');
 
-            return response()->json($result);
-        } catch (\Throwable $e) {
-            Utility::log("LocationController::getLocationStaffs", $e->getMessage());
-            return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
-        }
+        $result = $staffs->map(function ($staff) use ($locations) {
+            $location = $locations->get($staff->id);
+
+            return [
+                'id'          => $staff->id,
+                'staff_no'    => $staff->staff_no,
+                'eng_name'    => $staff->eng_name,
+                'work_type'   => $staff->work_type,
+                'jp_name'     => $staff->jp_name,
+                'loc_id'      => $location ? $location->id : null,
+                'lat'         => $location ? $location->lat : null,
+                'lon'         => $location ? $location->lon : null,
+                'allow_meter' => $location ? $location->allow_meter : null,
+                'device_uuid' => $location ? $location->device_uuid : null,
+            ];
+        });
+
+        return response()->json($result);
+    } catch (\Throwable $e) {
+        Utility::log("LocationController::getLocationStaffs", $e->getMessage());
+        return response()->json([], ReturnMessage::INTERNAL_SERVER_ERROR);
     }
+}
 
     public function saveLocation(Request $request)
     {

@@ -167,6 +167,8 @@ class AttendanceController extends Controller
                         'device_uuid' => $requestDeviceUuid,
                     ]);
                 } elseif (empty($location->device_uuid)) {
+                    $location->update(['lat' => $userLat]);
+                    $location->update(['lon' => $userLng]);
                     $location->update(['device_uuid' => $requestDeviceUuid]);
                     $location->update(['deleted_at' => null]);
                 }
