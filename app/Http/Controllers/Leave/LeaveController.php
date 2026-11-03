@@ -52,7 +52,7 @@ class LeaveController extends Controller
     }
 }
 
-  public function create(LeaveCreateRequest $request)
+public function create(LeaveCreateRequest $request)
     {
         DB::beginTransaction();
 
@@ -140,7 +140,7 @@ class LeaveController extends Controller
                 if ($existingLeaves->isNotEmpty()) {
                     foreach ($existingLeaves as $exLeave) {
                         if ($exLeave->leave_type == 3) {
-                            // Short Leave
+                            // Short Leave Refund
                             $durInt = (int) $exLeave->duration;
                             $shortHoursMap = [
                                 3 => 3.5, 4 => 3.0, 5 => 2.5, 
@@ -150,7 +150,7 @@ class LeaveController extends Controller
                             $leaveRecord->accumulated_hours = max(0, (float) $leaveRecord->accumulated_hours - $deductHrs);
                         } 
                         elseif ($exLeave->leave_type == 1) {
-                            // Paid Normal Leave
+                            // Paid Normal Leave Refund
                             $durInt = (int) $exLeave->duration;
                             $refundAmount = $durationMap[$durInt] ?? (float) $exLeave->day_count;
 
@@ -191,11 +191,11 @@ class LeaveController extends Controller
                     $availableBalance = $carryLeaves + $secondAnnual + $firstAnnual;
                 }
 
-               
                 if ($availableBalance <= 0) {
                     $leaveRecord->remain_leaves = 0;
 
-                    if ($appliedDuration < 1.0) {
+                    // Only accumulate hours for strict short leaves (duration ID 3 to 9, which means less than 0.5 days)
+                    if ($appliedDuration < 0.5) {
                         $additionalHours = $appliedDuration * 8.0; 
                         $leaveRecord->accumulated_hours += $additionalHours;
                         $leaveRecord->save();
@@ -211,20 +211,19 @@ class LeaveController extends Controller
                         $leaves[] = new LeaveResource($shortLeave);
                         continue;
                     } else {
+                        // For Half Day (0.5) or Full Day (1.0) when balance is zero, treat completely as unpaid
                         $paidAmount   = 0.0;
                         $unpaidAmount = $appliedDuration;
                     }
-                }
-
-                if ($availableBalance >= $appliedDuration) {
-                    $paidAmount   = $appliedDuration;
-                    $unpaidAmount = 0.0;
-                } elseif ($availableBalance > 0) {
-                    $paidAmount   = $availableBalance;
-                    $unpaidAmount = $appliedDuration - $availableBalance;
                 } else {
-                    $paidAmount   = 0.0;
-                    $unpaidAmount = $appliedDuration;
+                    if ($availableBalance >= $appliedDuration) {
+                        $paidAmount   = $appliedDuration;
+                        $unpaidAmount = 0.0;
+                    } else {
+                        // Partial balance available (e.g. balance is 0.25 but user requested Full Day/Half Day)
+                        $paidAmount   = $availableBalance;
+                        $unpaidAmount = $appliedDuration - $availableBalance;
+                    }
                 }
 
                 // Deduct Paid Portion with Priority: Carry Leaves -> Second Annual -> First Annual
@@ -276,11 +275,6 @@ class LeaveController extends Controller
                 if ($unpaidAmount > 0) {
                     $leaveRecord->unpaid += $unpaidAmount;
                     
-                    // If duration is small and no balance remains, we can also accumulate hours
-                    if ($appliedDuration < 1.0) {
-                        $leaveRecord->accumulated_hours += ($appliedDuration * 8.0);
-                    }
-
                     $leaveRecord->save();
 
                     $unpaidDurationId = $getDurationId($unpaidAmount, $durationId);
