@@ -367,9 +367,6 @@ class LeaveRecordController extends Controller
     $record->second_annual = 0;
     $record->accumulated_hours = 0.0;
 
-    // ယခင် ရှိနှင့်ပြီးသား Short Leave များကို Unpaid ပြောင်းလိုက ပြောင်းမည် (သို့မဟုတ် Short Leave အတိုင်း ထားမည်)
-    // $convertShortLeavesToUnpaid();
-
     if ($remainingHours > 0) {
         $durationKey = (string) $remainingHours;
         $remDurationId = $hoursToDurationMap[$durationKey] ?? '9';
