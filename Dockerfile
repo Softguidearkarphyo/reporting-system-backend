@@ -1,5 +1,4 @@
-FROM php:8.3-fpm
-
+FROM php:8.3.36-fpm
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -19,5 +18,5 @@ ARG PGID=1000
 RUN groupmod -o -g ${PGID} www-data \
     && usermod -o -u ${PUID} www-data
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
