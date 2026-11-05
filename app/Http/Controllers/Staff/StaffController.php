@@ -7,6 +7,7 @@ use App\Utility;
 use Carbon\Carbon;
 use App\Models\Staff;
 use App\Models\LeaveRecord;
+use App\Models\Leave;
 use App\ReturnMessage;
 use App\Models\StaffFine;
 use App\Models\StaffProject;
@@ -23,6 +24,7 @@ use App\Http\Requests\Staff\StaffUpdateRequest;
 use App\Http\Resources\Staff\StaffFineResource;
 use App\Http\Requests\Staff\StaffFineDeleteRequest;
 use App\Models\SkillSheet;
+use App\Models\OverTime;
 
 class StaffController extends Controller
 {
@@ -176,6 +178,11 @@ public function update(StaffUpdateRequest $request)
             $data   = $request->all();
             Staff::where('id', $data['id'])->update(['deleted_at' => now()]);
             SkillSheet::where('staff_id', $data['id'])->delete();
+            StaffFine::where('staff_id', $data['id'])->delete();
+            OverTime::where('staff_id', $data['id'])->delete();
+            $leaveRecordIds = LeaveRecord::where('staff_id', $data['id'])->pluck('id');
+            Leave::whereIn('rec_id', $leaveRecordIds)->delete();
+            LeaveRecord::where('staff_id', $data['id'])->delete();
             DB::commit();
             return response()->json($data['id']);
         } catch (\Throwable  $e) {
